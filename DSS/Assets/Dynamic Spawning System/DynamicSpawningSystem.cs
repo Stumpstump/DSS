@@ -187,13 +187,17 @@ namespace DDS
         void SpawnSeverallInARandomPositions()
         {
             GameObject bufferObject;
-            int Position = Random.Range(0, spawnPositions.Count);
-            Vector3 RandomPosition = new Vector3(spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().x, spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().y, spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().z);
-            bufferObject = Instantiate<GameObject>(SpawnObject, RandomPosition, SpawnObject.transform.rotation);
+            if(spawnPositions.Count > 0)
+            {
+                int Position = Random.Range(0, spawnPositions.Count);
+                Vector3 RandomPosition = new Vector3(spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().x, spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().y, spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().z);
+                bufferObject = Instantiate<GameObject>(SpawnObject, RandomPosition, SpawnObject.transform.rotation);
+                if(!spawnInFrustum)
+                    if (IsVisible(bufferObject))
+                        Destroy(bufferObject);
 
-            if(!spawnInFrustum)
-                if (IsVisible(bufferObject))
-                    Destroy(bufferObject);
+            }
+
 
         }
 
@@ -272,7 +276,7 @@ namespace DDS
                     switch(DynamicSpawned.playerIndetification)
                     {
                         case IdentifyPlayer.byField:
-                            DynamicSpawned.identificationData.Object = (GameObject)EditorGUILayout.ObjectField("Object:", DynamicSpawned.identificationData.Object, typeof(GameObject), true);
+                            DynamicSpawned.identificationData.Object = (GameObject)EditorGUILayout.ObjectField("Object: ", DynamicSpawned.identificationData.Object, typeof(GameObject), true);
                             break;
 
                         case IdentifyPlayer.byName:
@@ -295,7 +299,7 @@ namespace DDS
 
                     //GUILayoutOption[]
 
-                    DynamicSpawned.ObjectDistanceCheck = (DistanceCheckingStyles)EditorGUILayout.Popup(new GUIContent("Check Style", "How to check the Range"),(int)DynamicSpawned.ObjectDistanceCheck, Options);
+                    DynamicSpawned.ObjectDistanceCheck = (DistanceCheckingStyles)EditorGUILayout.Popup(new GUIContent("Check Style: ", "How to check the Range"),(int)DynamicSpawned.ObjectDistanceCheck, Options);
 
                     if(DynamicSpawned.ObjectDistanceCheck == DistanceCheckingStyles.TwoDimensionalCheck || DynamicSpawned.ObjectDistanceCheck == DistanceCheckingStyles.ThreeDimensionalCheck)
                     {
@@ -329,7 +333,9 @@ namespace DDS
 
                 if(!DynamicSpawned.spawnInFrustum)
                 {
-                    DynamicSpawned.frustumCamera = (Camera)EditorGUILayout.ObjectField(new GUIContent("Camera:", "Camera to check the frustum of"), DynamicSpawned.frustumCamera, typeof(Camera), true);
+                    EditorGUI.indentLevel++;
+                    DynamicSpawned.frustumCamera = (Camera)EditorGUILayout.ObjectField(new GUIContent("Camera: ", "Camera to check the frustum of"), DynamicSpawned.frustumCamera, typeof(Camera), true);
+                    EditorGUI.indentLevel--;
                 }
 
 
@@ -371,13 +377,13 @@ namespace DDS
                         if (DynamicSpawned.spawnArea)
                             DestroyImmediate(DynamicSpawned.spawnArea);
 
-                        DoShowPointPositions = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), DoShowPointPositions, "SpawnPoint Positions", true);
+                        DoShowPointPositions = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), DoShowPointPositions, "SpawnPoint Positions: ", true);
 
                         if(DoShowPointPositions)
                         {
                             EditorGUI.indentLevel++;
 
-                            DesiredSpawnPositionIndex = EditorGUILayout.IntField(new GUIContent("Spawn Position Size"), DesiredSpawnPositionIndex);
+                            DesiredSpawnPositionIndex = EditorGUILayout.IntField(new GUIContent("Spawn Position Size: "), DesiredSpawnPositionIndex);
 
                             while(DesiredSpawnPositionIndex < DynamicSpawned.spawnPositions.Count)
                             {
@@ -387,7 +393,7 @@ namespace DDS
 
                             while(DesiredSpawnPositionIndex > DynamicSpawned.spawnPositions.Count)
                             {
-                                GameObject bufferPosition = Instantiate(Resources.Load("SpawnPosition", typeof(GameObject))) as GameObject;
+                                GameObject bufferPosition = Instantiate(Resources.Load("SpawnPositions: ", typeof(GameObject))) as GameObject;
                                 bufferPosition.transform.SetParent(DynamicSpawned.transform);
                                 bufferPosition.transform.name = "SpawnPosition " + UniqueNumber;
                                 bufferPosition.transform.localPosition = new Vector3(0, 0, 0);
@@ -411,6 +417,7 @@ namespace DDS
                         if (GUILayout.Button("Create Position"))
                         {
                             DesiredSpawnPositionIndex++;
+                            DoShowPointPositions = true;
                             GameObject bufferPosition = Instantiate(Resources.Load("SpawnPosition", typeof(GameObject))) as GameObject;
                             bufferPosition.transform.SetParent(DynamicSpawned.transform);
                             bufferPosition.transform.name = "SpawnPosition " + UniqueNumber;
