@@ -65,6 +65,16 @@ namespace DDS
         /// </summary>
         public float RangeToCheck;
 
+        /// <summary>
+        /// Should the Object spawn if its in the player frustum.
+        /// </summary>
+        public bool spawnInFrustum = true;
+
+        /// <summary>
+        /// Camera to check the frustum.
+        /// </summary>
+        public Camera frustumCamera;
+
         #endregion
 
         #region Private Fields
@@ -168,15 +178,29 @@ namespace DDS
 
         void SpawnSeverallInArea()
         {
-            Instantiate<GameObject>(SpawnObject, new Vector3(spawnArea.GetComponent<SpawnArea>().GetRandomPosition().x, SpawnObject.transform.position.y, spawnArea.GetComponent<SpawnArea>().GetRandomPosition().z), SpawnObject.transform.rotation);
+            GameObject bufferObject = Instantiate<GameObject>(SpawnObject, new Vector3(spawnArea.GetComponent<SpawnArea>().GetRandomPosition().x, SpawnObject.transform.position.y, spawnArea.GetComponent<SpawnArea>().GetRandomPosition().z), SpawnObject.transform.rotation);
+            if (!spawnInFrustum)
+                if (IsVisible(bufferObject))
+                    Destroy(bufferObject);
         }
 
         void SpawnSeverallInARandomPositions()
         {
+            GameObject bufferObject;
             int Position = Random.Range(0, spawnPositions.Count);
             Vector3 RandomPosition = new Vector3(spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().x, spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().y, spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().z);
-            Instantiate<GameObject>(SpawnObject, RandomPosition, SpawnObject.transform.rotation);
+            bufferObject = Instantiate<GameObject>(SpawnObject, RandomPosition, SpawnObject.transform.rotation);
 
+            if(!spawnInFrustum)
+                if (IsVisible(bufferObject))
+                    Destroy(bufferObject);
+
+        }
+
+        bool IsVisible(GameObject checkObject)
+        {
+            Plane[] CameraBounds = GeometryUtility.CalculateFrustumPlanes(frustumCamera);
+            return GeometryUtility.TestPlanesAABB(CameraBounds, checkObject.GetComponent<MeshRenderer>().bounds);                 
         }
 
         #endregion
@@ -300,6 +324,14 @@ namespace DDS
 
                     EditorGUI.indentLevel--;
                 }
+
+                DynamicSpawned.spawnInFrustum = EditorGUILayout.Toggle(new GUIContent("Spawn in Frustum: ", "Should objects spawn if they are in the Camera frustum"), DynamicSpawned.spawnInFrustum);
+
+                if(!DynamicSpawned.spawnInFrustum)
+                {
+                    DynamicSpawned.frustumCamera = (Camera)EditorGUILayout.ObjectField(new GUIContent("Camera:", "Camera to check the frustum of"), DynamicSpawned.frustumCamera, typeof(Camera), true);
+                }
+
 
                 string[] SpawnPositioningStyleOptions = new string[2];
                 SpawnPositioningStyleOptions[0] = "Area";
