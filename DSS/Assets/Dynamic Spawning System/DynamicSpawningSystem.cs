@@ -9,6 +9,36 @@ namespace DDS
     {
         #region Public Fields
 
+        /// <summary>
+        /// Position the Object can spawn at
+        /// </summary>
+        public List<GameObject> spawnPositions = new List<GameObject>();
+
+        /// <summary>
+        /// Area in which objects can spawn
+        /// </summary>
+        public GameObject spawnArea;
+
+        /// <summary>
+        /// The way the Position of the Spawned Objects get decided
+        /// /// </summary>
+        public PositioningOptions spawnPositionOptions;
+
+        /// <summary>
+        /// The Style Objects get spawned Waves etc.
+        /// </summary>
+        public SpawnStyle spawnStyle;
+
+        /// <summary>
+        /// The way the Player gets identificated and a struct with the data for it
+        /// </summary>
+        public IdentifyPlayer playerIndetification;
+        public Identification identificationData;
+
+        /// <summary>
+        /// The test Object which we are spawning.
+        /// </summary>
+        public GameObject SpawnObject;
 
         /// <summary>
         /// TestSpawnCheckings
@@ -16,139 +46,220 @@ namespace DDS
         public SpawnSettings TestSpawnSettings;
 
         /// <summary>
-        /// Test object to check the Distance of
+        /// The Object to check the range of
         /// </summary>
-        public GameObject ObjectToCheck;
+        public GameObject Player;
 
         /// <summary>
-        /// How to check the test Objects Distance
+        /// They way to check the distance of the Player to the Spawner
         /// </summary>
         public DistanceCheckingStyles ObjectDistanceCheck;
 
         /// <summary>
-        /// Visual reprensation if the object is in range
+        /// Is the player in range of the spawner
         /// </summary>
-        public bool InRange = false;
+        public bool isInRange = false;
 
         /// <summary>
-        /// Range to check for
+        /// The Range to check for used with 2D and 3D check
         /// </summary>
         public float RangeToCheck;
 
-        /// <summary>
-        /// Range to check for
-        /// </summary>
-        public float TriggerRange;
-
         #endregion
-
-
 
         #region Private Fields
 
         /// <summary>
-        /// Sphere to check for the player
-        /// Requires at least one object to have a rigidbody
+        /// Counter of the current spawn interval time
         /// </summary>
-        SphereCollider sphereToCheckForThePlayer;
-
-        float TestTimeIntervalCounter;
+        float SpawnInterval;
 
         #endregion
 
+        #region Private Methods        
+
         void Start()
         {
-            if (!ObjectToCheck)
-            {
-                Debug.Log("Object to check is null");
-            }
-
-            if (ObjectDistanceCheck == 0)
-            {
-                Debug.Log("Object Distance to check wasnt assigned so its 1");
-                ObjectDistanceCheck = DistanceCheckingStyles.TwoDimensionalCheck;
-            }
-
-            sphereToCheckForThePlayer = gameObject.GetComponent<SphereCollider>();
-
-            sphereToCheckForThePlayer.radius = TriggerRange;
-            sphereToCheckForThePlayer.transform.position = transform.position;
-            
+            InitializeObjectstoCheck();         
         }
 
-        // Update is called once per frame
         void Update()
         {
-            TestTimeIntervalCounter += Time.deltaTime;
+            InitializeObjectstoCheck();
+            SpawnInterval += Time.deltaTime;
 
-            switch (ObjectDistanceCheck)
+            
+            if(TestSpawnSettings.SpawnIfInRange && Player)
             {
-                case DistanceCheckingStyles.TwoDimensionalCheck:
-                    InRange = DistanceChecking.TwoDimensionalCheck(transform, ObjectToCheck.transform, RangeToCheck);
-                    break;
+                switch (ObjectDistanceCheck)
+                {
+                    case DistanceCheckingStyles.TwoDimensionalCheck:
+                        isInRange = DistanceChecking.TwoDimensionalCheck(transform, Player.transform, RangeToCheck);
+                        break;
 
-                case DistanceCheckingStyles.ThreeDimensionalCheck:
-                    InRange = DistanceChecking.ThreeDimensionalCheck(transform, ObjectToCheck.transform, RangeToCheck);
-                    break;
+                    case DistanceCheckingStyles.ThreeDimensionalCheck:
+                        isInRange = DistanceChecking.ThreeDimensionalCheck(transform, Player.transform, RangeToCheck);
+                        break;
+                }
             }
 
-            if(TestSpawnSettings.SpawnIfInRange && InRange || !TestSpawnSettings.SpawnIfInRange)
+            if (TestSpawnSettings.SpawnIfInRange && isInRange || !TestSpawnSettings.SpawnIfInRange)
             {
-                if(TestTimeIntervalCounter >= TestSpawnSettings.SpawnDelay)
+                if(SpawnInterval >= TestSpawnSettings.SpawnDelay)
                 {
-                    TestTimeIntervalCounter = 0f;
-                    Debug.Log("SpawnObject");
+                    SpawnInterval = 0f;
+
+                    if (spawnStyle == SpawnStyle.Severally)
+                    {
+                        switch(spawnPositionOptions)
+                        {
+                            case PositioningOptions.Area:
+                                this.SpawnSeverallInArea();
+                                break;
+
+                            case PositioningOptions.Points:
+                                this.SpawnSeverallInARandomPositions();
+                                break;
+                        }
+
+                    }
+
+        
                 }
             }
         }
-
+        
         void OnTriggerEnter(Collider collider)
         {
             if(ObjectDistanceCheck == DistanceCheckingStyles.SphereColliderCheck)
-                if (collider.gameObject == ObjectToCheck)
-                    InRange = true;
+                if (collider.gameObject == Player)
+                    isInRange = true;
         }
 
         void OnTriggerExit(Collider collider)
         {
             if (ObjectDistanceCheck == DistanceCheckingStyles.SphereColliderCheck)
-                if (collider.gameObject == ObjectToCheck)
-                    InRange = false;
+                if (collider.gameObject == Player)
+                    isInRange = false;
         }
- 
+
+        #endregion
+
+        #region Dynamic Spawner Methods
+
+        void InitializeObjectstoCheck()
+        {
+            switch(playerIndetification)
+            {
+                case IdentifyPlayer.byField:
+                    Player = identificationData.Object;
+                    break;
+
+                case IdentifyPlayer.byName:
+                    Player = GameObject.Find(identificationData.Name);
+                    break;
+
+                case IdentifyPlayer.byTag:
+                    string Tag = UnityEditorInternal.InternalEditorUtility.tags[identificationData.Tag];
+                    Player = GameObject.FindWithTag(Tag);
+                    break;
+            }
+        }
+
+        void SpawnSeverallInArea()
+        {
+            Instantiate<GameObject>(SpawnObject, new Vector3(spawnArea.GetComponent<SpawnArea>().GetRandomPosition().x, SpawnObject.transform.position.y, spawnArea.GetComponent<SpawnArea>().GetRandomPosition().z), SpawnObject.transform.rotation);
+        }
+
+        void SpawnSeverallInARandomPositions()
+        {
+            int Position = Random.Range(0, spawnPositions.Count);
+            Vector3 RandomPosition = new Vector3(spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().x, spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().y, spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().z);
+            Instantiate<GameObject>(SpawnObject, RandomPosition, SpawnObject.transform.rotation);
+
+        }
+
+        #endregion
     }
 
+
+
+    /// <summary>
+    /// Class for personalization the editor, ill document this later on
+    /// </summary>
     [CustomEditor(typeof(DynamicSpawningSystem))]
     public class DynamicScriptEditor : Editor
     {
+        int UniqueNumber = 0;
+
+        bool DoShowPointPositions = true;
 
         bool DoShowTestGameSettingsContent = true;
-        bool DoShowRangeSettings = false;
+
+        int SpawnPointPositionsArraySize;
+
+        int DesiredSpawnPositionIndex;
 
         override public void OnInspectorGUI()
         {
             var DynamicSpawned = target as DynamicSpawningSystem;
 
-           
-        
-            DoShowTestGameSettingsContent = EditorGUILayout.Foldout(DoShowTestGameSettingsContent, new GUIContent("Test Game Settings"));
-            if(DoShowTestGameSettingsContent)
+            DesiredSpawnPositionIndex = DynamicSpawned.spawnPositions.Count;
+
+            EditorGUILayout.Toggle("In range:", DynamicSpawned.isInRange);
+
+            DoShowTestGameSettingsContent = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), DoShowTestGameSettingsContent, "Test Game Settings", true);
+
+
+            DynamicSpawned.SpawnObject = (GameObject)EditorGUILayout.ObjectField("Object:", DynamicSpawned.SpawnObject, typeof(GameObject), true);
+
+
+            if (DoShowTestGameSettingsContent)
             {
-                EditorGUI.indentLevel++;
+                string[] SpawnStyleOptions = new string[2];
+
+                SpawnStyleOptions[0] = "Waves";
+                SpawnStyleOptions[1] = "Severally";
+
+                DynamicSpawned.spawnStyle = (SpawnStyle)EditorGUILayout.Popup(new GUIContent("Spawn Style: "), (int)DynamicSpawned.spawnStyle, SpawnStyleOptions);
+
                 DynamicSpawned.TestSpawnSettings.SpawnDelay = EditorGUILayout.FloatField(new GUIContent("Spawn Delay", "In Seconds"), DynamicSpawned.TestSpawnSettings.SpawnDelay);
+
+      
 
                 if (DynamicSpawned.TestSpawnSettings.SpawnDelay < 0f)
                     DynamicSpawned.TestSpawnSettings.SpawnDelay *= -1;
             
                 DynamicSpawned.TestSpawnSettings.SpawnIfInRange = EditorGUILayout.Toggle(new GUIContent("Spawn if in Range", "Spawn the Object only if the Player is in range"), DynamicSpawned.TestSpawnSettings.SpawnIfInRange);
 
-                if(DynamicSpawned.TestSpawnSettings.SpawnIfInRange)
+
+                if (DynamicSpawned.TestSpawnSettings.SpawnIfInRange)
                 {
                     EditorGUI.indentLevel++;
+                    string[] PlayerIdentificationOptions = new string[3];
 
-                    Object obj = DynamicSpawned.ObjectToCheck;
+                    PlayerIdentificationOptions[0] = "By Tag";
+                    PlayerIdentificationOptions[1] = "By Name";
+                    PlayerIdentificationOptions[2] = "By Field";
 
-                    DynamicSpawned.ObjectToCheck = (GameObject)EditorGUILayout.ObjectField("Player:", DynamicSpawned.ObjectToCheck, typeof(GameObject), true);
+
+                    DynamicSpawned.playerIndetification = (IdentifyPlayer)EditorGUILayout.Popup(new GUIContent("Identification: ", "How to check for the Player"), (int)DynamicSpawned.playerIndetification, PlayerIdentificationOptions);
+
+                    switch(DynamicSpawned.playerIndetification)
+                    {
+                        case IdentifyPlayer.byField:
+                            DynamicSpawned.identificationData.Object = (GameObject)EditorGUILayout.ObjectField("Object:", DynamicSpawned.identificationData.Object, typeof(GameObject), true);
+                            break;
+
+                        case IdentifyPlayer.byName:
+                            DynamicSpawned.identificationData.Name = EditorGUILayout.TextField(new GUIContent("Name: "), DynamicSpawned.identificationData.Name);
+                            break;
+
+                        case IdentifyPlayer.byTag:
+                            string[] Tags = UnityEditorInternal.InternalEditorUtility.tags;
+                            DynamicSpawned.identificationData.Tag = EditorGUILayout.Popup(new GUIContent("Tag: "), DynamicSpawned.identificationData.Tag,  Tags);
+                            break;
+                    }
 
                     GUIContent[] DistanceCheckingOptionsDescription = new GUIContent[3];
 
@@ -164,13 +275,11 @@ namespace DDS
 
                     if(DynamicSpawned.ObjectDistanceCheck == DistanceCheckingStyles.TwoDimensionalCheck || DynamicSpawned.ObjectDistanceCheck == DistanceCheckingStyles.ThreeDimensionalCheck)
                     {
-                        EditorGUI.indentLevel++;
                         DynamicSpawned.RangeToCheck = EditorGUILayout.FloatField(new GUIContent("Range: "), DynamicSpawned.RangeToCheck);
                     }
 
                     else if(DynamicSpawned.ObjectDistanceCheck == DistanceCheckingStyles.SphereColliderCheck)
                     {
-                        EditorGUI.indentLevel++;
 
                         if (DynamicSpawned.gameObject.GetComponent<SphereCollider>() == null)
                         {
@@ -185,9 +294,103 @@ namespace DDS
                     }
 
                     if(DynamicSpawned.ObjectDistanceCheck != DistanceCheckingStyles.SphereColliderCheck)
-                    {
+                    {                        
                         DestroyImmediate(DynamicSpawned.gameObject.GetComponent<SphereCollider>());
                     }
+
+                    EditorGUI.indentLevel--;
+                }
+
+                string[] SpawnPositioningStyleOptions = new string[2];
+                SpawnPositioningStyleOptions[0] = "Area";
+                SpawnPositioningStyleOptions[1] = "Points";
+
+
+                DynamicSpawned.spawnPositionOptions = (PositioningOptions)EditorGUILayout.Popup(new GUIContent("Spawn Style: "), (int)DynamicSpawned.spawnPositionOptions, SpawnPositioningStyleOptions);
+
+                switch(DynamicSpawned.spawnPositionOptions)
+                {
+                    case PositioningOptions.Area:
+
+
+                        for(int childIndex = 0; childIndex < DynamicSpawned.transform.childCount; childIndex++)
+                        {
+                            if (DynamicSpawned.transform.GetChild(childIndex).name == "SpawnArea")
+                            {
+                                DynamicSpawned.spawnArea = DynamicSpawned.transform.GetChild(childIndex).gameObject; DynamicSpawned.spawnArea.GetComponent<MeshCollider>().hideFlags = HideFlags.HideInInspector;
+                            }
+                        }
+
+                        if(!DynamicSpawned.spawnArea)
+                        {
+
+                            DynamicSpawned.spawnArea = Instantiate(Resources.Load("SpawnArea", typeof(GameObject))) as GameObject; //Resources.Load<GameObject>("Assets /DynamicSpawningSystem/SpawnArea");
+                            DynamicSpawned.spawnArea.transform.SetParent(DynamicSpawned.transform);
+                            DynamicSpawned.spawnArea.transform.name = "SpawnArea";
+                            DynamicSpawned.spawnArea.transform.localPosition = new Vector3(0, 0, 0);
+                            DynamicSpawned.spawnArea.GetComponent<MeshCollider>().hideFlags = HideFlags.HideInInspector;
+                            DynamicSpawned.spawnArea.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
+                            DynamicSpawned.spawnArea.GetComponent<SpawnArea>().hideFlags = HideFlags.HideInInspector;
+                        }                        
+                        break;
+
+                    case PositioningOptions.Points:
+
+                        if (DynamicSpawned.spawnArea)
+                            DestroyImmediate(DynamicSpawned.spawnArea);
+
+                        DoShowPointPositions = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), DoShowPointPositions, "SpawnPoint Positions", true);
+
+                        if(DoShowPointPositions)
+                        {
+                            EditorGUI.indentLevel++;
+
+                            DesiredSpawnPositionIndex = EditorGUILayout.IntField(new GUIContent("Spawn Position Size"), DesiredSpawnPositionIndex);
+
+                            while(DesiredSpawnPositionIndex < DynamicSpawned.spawnPositions.Count)
+                            {
+                                DestroyImmediate(DynamicSpawned.spawnPositions[DynamicSpawned.spawnPositions.Count - 1]);
+                                DynamicSpawned.spawnPositions.RemoveAt(DynamicSpawned.spawnPositions.Count -1);
+                            }
+
+                            while(DesiredSpawnPositionIndex > DynamicSpawned.spawnPositions.Count)
+                            {
+                                GameObject bufferPosition = Instantiate(Resources.Load("SpawnPosition", typeof(GameObject))) as GameObject;
+                                bufferPosition.transform.SetParent(DynamicSpawned.transform);
+                                bufferPosition.transform.name = "SpawnPosition " + UniqueNumber;
+                                bufferPosition.transform.localPosition = new Vector3(0, 0, 0);
+                                DynamicSpawned.spawnPositions.Add(bufferPosition);
+
+                                UniqueNumber++;
+                            }
+
+                            for (int spawnPositionIndex = 0; spawnPositionIndex < DynamicSpawned.spawnPositions.Count; spawnPositionIndex++)
+                            {
+                                DynamicSpawned.spawnPositions[spawnPositionIndex] = EditorGUILayout.ObjectField("Spawn Position: ", DynamicSpawned.spawnPositions[spawnPositionIndex], typeof(GameObject), true) as GameObject;
+                            }
+
+
+
+                            EditorGUI.indentLevel--;
+                        }
+
+                        //GUILayoutOption Button = GUILayout.Button()
+
+                        if (GUILayout.Button("Create Position"))
+                        {
+                            DesiredSpawnPositionIndex++;
+                            GameObject bufferPosition = Instantiate(Resources.Load("SpawnPosition", typeof(GameObject))) as GameObject;
+                            bufferPosition.transform.SetParent(DynamicSpawned.transform);
+                            bufferPosition.transform.name = "SpawnPosition " + UniqueNumber;
+                            bufferPosition.transform.localPosition = new Vector3(0, 0, 0);
+                            DynamicSpawned.spawnPositions.Add(bufferPosition);
+
+                            UniqueNumber++;
+                        }
+
+                        break;
+
+
                 }
             }
         }
