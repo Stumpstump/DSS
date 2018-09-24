@@ -9,6 +9,17 @@ namespace DDS
     {
         #region Public Fields
 
+        public bool continuousWaves;
+
+        public int WaveSpawnAmount;
+
+        public bool LimitObjectsAlive;
+
+        public int MaximalSpawnedObjects;
+
+        public List<GameObject> SpawnedObjects;
+
+
         /// <summary>
         /// Position the Object can spawn at
         /// </summary>
@@ -95,7 +106,8 @@ namespace DDS
 
         void Update()
         {
-            InitializeObjectstoCheck();
+            this.InitializeObjectstoCheck();
+            this.CheckSpawnedObjects();
             SpawnInterval += Time.deltaTime;
 
             
@@ -115,13 +127,14 @@ namespace DDS
 
             if (TestSpawnSettings.SpawnIfInRange && isInRange || !TestSpawnSettings.SpawnIfInRange)
             {
-                if(SpawnInterval >= TestSpawnSettings.SpawnDelay)
-                {
-                    SpawnInterval = 0f;
 
-                    if (spawnStyle == SpawnStyle.Severally)
+                if (spawnStyle == SpawnStyle.Continuous)
+                {
+                    if (SpawnInterval >= TestSpawnSettings.SpawnDelay)
                     {
-                        switch(spawnPositionOptions)
+                        SpawnInterval = 0f;
+
+                        switch (spawnPositionOptions)
                         {
                             case PositioningOptions.Area:
                                 this.SpawnSeverallInArea();
@@ -131,11 +144,17 @@ namespace DDS
                                 this.SpawnSeverallInARandomPositions();
                                 break;
                         }
-
                     }
-
-        
                 }
+
+                else if(spawnStyle == SpawnStyle.Wave)
+                {
+                    if(continuousWaves)
+                    {
+                        this.SpawnWaveInArea();
+                    }
+                }
+
             }
         }
         
@@ -151,6 +170,7 @@ namespace DDS
             if (ObjectDistanceCheck == DistanceCheckingStyles.SphereColliderCheck)
                 if (collider.gameObject == Player)
                     isInRange = false;
+            
         }
 
         #endregion
@@ -176,35 +196,176 @@ namespace DDS
             }
         }
 
-        void SpawnSeverallInArea()
+        public void ResetSpawnedObjects()
+        {
+            for (int i = 0; i < SpawnedObjects.Count; i++)
+                Destroy(SpawnedObjects[i]);
+
+            Debug.Log("Jupo");
+            SpawnedObjects.Clear();
+        }
+
+        bool SpawnWaveInArea()
+        {
+            if (SpawnedObjects.Count == 0)
+            {
+                for (int SpawnedIndex = 0; SpawnedIndex < WaveSpawnAmount; SpawnedIndex++)
+                {
+                    int Iteration = 0;
+                    GameObject bufferObject = Instantiate<GameObject>(SpawnObject, new Vector3(spawnArea.GetComponent<SpawnArea>().GetRandomPosition().x, SpawnObject.transform.position.y, spawnArea.GetComponent<SpawnArea>().GetRandomPosition().z), SpawnObject.transform.rotation);
+
+                    Iteration = 0;
+
+                    while (!IsPositionEmpty(bufferObject))
+                    {
+                        Iteration++;
+                        if (Iteration > 200)
+                        {
+                            Debug.Log("NoEmptyPositionFound");
+                            Destroy(bufferObject);
+                            this.ResetSpawnedObjects();
+                            return false;
+                            
+                        }
+                        
+                        bufferObject.transform.position = new Vector3(spawnArea.GetComponent<SpawnArea>().GetRandomPosition().x, SpawnObject.transform.position.y, spawnArea.GetComponent<SpawnArea>().GetRandomPosition().z);
+                    }
+
+                    Iteration = 0;
+                    if(!spawnInFrustum && IsVisible(bufferObject))
+                    {
+                        Debug.Log("Cant spawn one Object of the wave is visible");
+                        Destroy(bufferObject);
+                        this.ResetSpawnedObjects();
+                        return false;
+                    }
+
+                  
+                    SpawnedObjects.Add(bufferObject);
+
+                }
+            }
+
+            return false;
+        }
+
+        bool SpawnSeverallInArea()
         {
             GameObject bufferObject = Instantiate<GameObject>(SpawnObject, new Vector3(spawnArea.GetComponent<SpawnArea>().GetRandomPosition().x, SpawnObject.transform.position.y, spawnArea.GetComponent<SpawnArea>().GetRandomPosition().z), SpawnObject.transform.rotation);
             if (!spawnInFrustum)
                 if (IsVisible(bufferObject))
                     Destroy(bufferObject);
+
+            return bufferObject;
         }
 
-        void SpawnSeverallInARandomPositions()
+        bool SpawnSeverallInARandomPositions()
         {
-            GameObject bufferObject;
+            GameObject bufferObject = null;
+
+            if (LimitObjectsAlive && MaximalSpawnedObjects <=  SpawnedObjects.Count)
+                return false;
+
             if(spawnPositions.Count > 0)
             {
+                bool DestroyObject = false;
+
                 int Position = Random.Range(0, spawnPositions.Count);
-                Vector3 RandomPosition = new Vector3(spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().x, spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().y, spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().z);
+                Vector3 RandomPosition = new Vector3(spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().x, SpawnObject.transform.position.y, spawnPositions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().z);
                 bufferObject = Instantiate<GameObject>(SpawnObject, RandomPosition, SpawnObject.transform.rotation);
-                if(!spawnInFrustum)
+
+                Ray testRay = new Ray(bufferObject.GetComponent<Renderer>().bounds.center, frustumCamera.transform.position);
+            
+
+                if (!spawnInFrustum)
                     if (IsVisible(bufferObject))
-                        Destroy(bufferObject);
+                        DestroyObject = true;
+                                    
+                if(DestroyObject)
+                    Destroy(bufferObject);
+
+                if (bufferObject)
+                {   
+                    SpawnedObjects.Add(bufferObject);                    
+                }
+
+            }
+
+            return bufferObject;
+
+        }
+
+        void CheckSpawnedObjects()
+        {       
+            for (int Index = 0; Index < SpawnedObjects.Count; Index++)
+            {
+                if (!SpawnedObjects[Index])
+                {
+                    SpawnedObjects.RemoveAt(Index);
+                }
+            }
+
+        }
+
+        bool IsPositionEmpty(GameObject Object)
+        {
+            Bounds ObjectBounds = new Bounds();
+
+            if (Object.GetComponent<Renderer>())
+                ObjectBounds = Object.GetComponent<Renderer>().bounds;
+
+            else if (Object.GetComponentInChildren<Renderer>())
+                ObjectBounds = Object.GetComponentInChildren<Renderer>().bounds;
+
+            else if (Object.GetComponentInParent<Renderer>())
+                ObjectBounds = Object.GetComponentInParent<Renderer>().bounds;
+
+
+            if (ObjectBounds == null)
+                return true;
+
+            Collider[] Colliders = Physics.OverlapBox(ObjectBounds.center, ObjectBounds.extents, Object.transform.rotation);
+
+            for( int index = 0; index < Colliders.Length; index++)
+            {
+                Bounds bounds = new Bounds();
+
+                if (Colliders[index].GetComponent<Renderer>())
+                    bounds = Colliders[index].GetComponent<Renderer>().bounds;
+
+                else if (Colliders[index].GetComponentInChildren<Renderer>())
+                    bounds = Colliders[index].GetComponentInChildren<Renderer>().bounds;
+
+                else if(Colliders[index].GetComponentInParent<Renderer>())
+                    bounds = Colliders[index].GetComponentInParent<Renderer>().bounds;
+
+                if(bounds != null)
+                    if (bounds.Intersects(ObjectBounds) && Colliders[index].gameObject != Object)
+                        return false;
 
             }
 
 
+            return true;
+            
         }
+
+        //public BoundingSphere CaluculateBoundingSphere()
 
         bool IsVisible(GameObject checkObject)
         {
+           
+            if (!checkObject.GetComponent<Renderer>())
+                return false;
+
             Plane[] CameraBounds = GeometryUtility.CalculateFrustumPlanes(frustumCamera);
-            return GeometryUtility.TestPlanesAABB(CameraBounds, checkObject.GetComponent<MeshRenderer>().bounds);                 
+            if(GeometryUtility.TestPlanesAABB(CameraBounds, checkObject.GetComponent<Renderer>().bounds))
+            {
+                RaycastHit hit;
+                return !Physics.Linecast(checkObject.GetComponent<Renderer>().bounds.center, frustumCamera.transform.position, out hit);
+            }
+
+            return false;
         }
 
         #endregion
@@ -212,7 +373,7 @@ namespace DDS
 
 
 
-    /// <summary>
+    /// <summar+y>
     /// Class for personalization the editor, ill document this later on
     /// </summary>
     [CustomEditor(typeof(DynamicSpawningSystem))]
@@ -247,17 +408,49 @@ namespace DDS
                 string[] SpawnStyleOptions = new string[2];
 
                 SpawnStyleOptions[0] = "Waves";
-                SpawnStyleOptions[1] = "Severally";
+                SpawnStyleOptions[1] = "Continuous";
 
                 DynamicSpawned.spawnStyle = (SpawnStyle)EditorGUILayout.Popup(new GUIContent("Spawn Style: "), (int)DynamicSpawned.spawnStyle, SpawnStyleOptions);
 
-                DynamicSpawned.TestSpawnSettings.SpawnDelay = EditorGUILayout.FloatField(new GUIContent("Spawn Delay", "In Seconds"), DynamicSpawned.TestSpawnSettings.SpawnDelay);
+                EditorGUI.indentLevel++;
 
-      
 
-                if (DynamicSpawned.TestSpawnSettings.SpawnDelay < 0f)
-                    DynamicSpawned.TestSpawnSettings.SpawnDelay *= -1;
-            
+                if(DynamicSpawned.spawnStyle == SpawnStyle.Continuous)
+                {
+                    DynamicSpawned.TestSpawnSettings.SpawnDelay = EditorGUILayout.FloatField(new GUIContent("Spawn Delay", "In Seconds"), DynamicSpawned.TestSpawnSettings.SpawnDelay);
+
+                    if (DynamicSpawned.TestSpawnSettings.SpawnDelay < 0f)
+                        DynamicSpawned.TestSpawnSettings.SpawnDelay *= -1;
+
+                    DynamicSpawned.LimitObjectsAlive = EditorGUILayout.Toggle(new GUIContent("Limit Object Amount: "), DynamicSpawned.LimitObjectsAlive);
+
+                    if(DynamicSpawned.LimitObjectsAlive)
+                    {
+                        DynamicSpawned.MaximalSpawnedObjects = EditorGUILayout.IntField(new GUIContent("Amout: "), DynamicSpawned.MaximalSpawnedObjects);
+                        if (DynamicSpawned.MaximalSpawnedObjects < 0)
+                            DynamicSpawned.MaximalSpawnedObjects = 0;
+                    }
+               
+                }
+
+                else if(DynamicSpawned.spawnStyle == SpawnStyle.Wave)
+                {
+                    DynamicSpawned.continuousWaves = EditorGUILayout.Toggle(new GUIContent("Continuous Waves: "), DynamicSpawned.continuousWaves);
+
+
+
+                        DynamicSpawned.WaveSpawnAmount = EditorGUILayout.IntField(new GUIContent("Spawn Amount: "), DynamicSpawned.WaveSpawnAmount);
+                    if (DynamicSpawned.WaveSpawnAmount > 100)
+                        DynamicSpawned.WaveSpawnAmount = 100;
+
+                    if(DynamicSpawned.WaveSpawnAmount < 1)
+                        DynamicSpawned.WaveSpawnAmount = 1;
+                      
+                }
+                
+
+                EditorGUI.indentLevel--;
+
                 DynamicSpawned.TestSpawnSettings.SpawnIfInRange = EditorGUILayout.Toggle(new GUIContent("Spawn if in Range", "Spawn the Object only if the Player is in range"), DynamicSpawned.TestSpawnSettings.SpawnIfInRange);
 
 
@@ -346,7 +539,11 @@ namespace DDS
 
                 DynamicSpawned.spawnPositionOptions = (PositioningOptions)EditorGUILayout.Popup(new GUIContent("Spawn Style: "), (int)DynamicSpawned.spawnPositionOptions, SpawnPositioningStyleOptions);
 
-                switch(DynamicSpawned.spawnPositionOptions)
+                if(DynamicSpawned.spawnStyle == SpawnStyle.Wave)
+                    DynamicSpawned.spawnPositionOptions = PositioningOptions.Area;
+
+
+                switch (DynamicSpawned.spawnPositionOptions)
                 {
                     case PositioningOptions.Area:
 
@@ -393,7 +590,7 @@ namespace DDS
 
                             while(DesiredSpawnPositionIndex > DynamicSpawned.spawnPositions.Count)
                             {
-                                GameObject bufferPosition = Instantiate(Resources.Load("SpawnPositions: ", typeof(GameObject))) as GameObject;
+                                GameObject bufferPosition = Instantiate(Resources.Load("SpawnPositions", typeof(GameObject))) as GameObject;
                                 bufferPosition.transform.SetParent(DynamicSpawned.transform);
                                 bufferPosition.transform.name = "SpawnPosition " + UniqueNumber;
                                 bufferPosition.transform.localPosition = new Vector3(0, 0, 0);
@@ -413,6 +610,8 @@ namespace DDS
                         }
 
                         //GUILayoutOption Button = GUILayout.Button()
+
+
 
                         if (GUILayout.Button("Create Position"))
                         {

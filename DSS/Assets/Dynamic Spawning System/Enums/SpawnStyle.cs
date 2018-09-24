@@ -8,6 +8,6 @@ namespace DDS
 {
     public enum SpawnStyle
     {
-        Wave, Severally 
+        Wave, Continuous
     }
 }
