@@ -25,7 +25,7 @@ public class EnemyNav : MonoBehaviour {
     public Transform player;
     public NavMeshAgent agent;
 
-    void Awake()
+    void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
         agent = GetComponent<NavMeshAgent>();
@@ -33,6 +33,10 @@ public class EnemyNav : MonoBehaviour {
 
     void Update()
     {
-        agent.SetDestination(player.position);
+
+       
+            agent.SetDestination(player.position);
+        
+      
     }
 }
