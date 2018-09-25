@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DDS
 {
-    public enum SpawnStyle
+    public enum SpawningStyles
     {
         Wave, Continuous
     }
