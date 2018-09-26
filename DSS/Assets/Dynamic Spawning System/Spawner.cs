@@ -10,6 +10,7 @@ namespace DDS
     /// </summary>
     public class Spawner : MonoBehaviour
     {
+        public bool Spawn_Wave_Trigger = false;
 
         public int Wave_Spawn_Amount;
 
@@ -53,7 +54,7 @@ namespace DDS
         /// Is the Player/Selected Object in range
         /// Dont change this manually
         /// </summary>
-        public bool Is_In_Range;
+        public bool Is_Not_In_Range;
 
         /// <summary>
         /// List of the Spawned Objects which are alive
@@ -86,6 +87,7 @@ namespace DDS
         public DistanceCheckingStyles Selected_Distance_Check;
         public Identification Player_Identification_Data;
 
+        public Vector3 TestPosition;
         /// <summary>
         /// Camera to check the frustum of
         /// </summary>
@@ -95,67 +97,179 @@ namespace DDS
 
         void Start()
         {
+
+            TestPosition = GameObject.Find("Test").transform.position;
+
             this.InitializeObjectstoCheck();         
         }
 
         void Update()
         {
+
             this.InitializeObjectstoCheck();
             this.CheckSpawnedObjects();
+
             SpawnInterval += Time.deltaTime;
 
+            if (Is_Not_In_Range && Do_Spawn_If_Not_In_Range || !Do_Spawn_If_Not_In_Range)
+            {               
+                switch(Selected_Spawning_Style)
+                {
+                    case SpawningStyles.Continuous:
+                        if(SpawnInterval > Spawn_Delay)
+                        {
+                            if (Do_Limit_Objects_Alive)
+                                if (Spawned_Objects.Count >= Maximal_Spawned_Objects_Alive)
+                                    return;
+
+                            GameObject bufferObject = null;
+
+                            switch (Selected_Spawn_Position_Option)
+                            {
+                                case PositioningOptions.Area:
+
+                                    if(!Do_Spawn_In_Frustum)                                   
+                                        bufferObject = SpawningFunctions.SpawnObjectInArea(Spawn_Area.GetComponent<SpawnArea>(), Object_To_Spawn, false, Frustum_Camera);                                    
+                                    else
+                                        bufferObject = SpawningFunctions.SpawnObjectInArea(Spawn_Area.GetComponent<SpawnArea>(), Object_To_Spawn, false);
+
+                                    if (bufferObject)
+                                    {
+                                        Spawned_Objects.Add(bufferObject);
+                                        SpawnInterval = 0f;
+                                    }                                        
+                                    break;
+
+                                case PositioningOptions.Points:   
+                                    if(!Do_Spawn_In_Frustum)
+                                        bufferObject = SpawningFunctions.SpawnObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Object_To_Spawn, false, Frustum_Camera);
+                                    else
+                                        bufferObject = SpawningFunctions.SpawnObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Object_To_Spawn, false);
+
+                                    if (bufferObject)
+                                    {
+                                        Spawned_Objects.Add(bufferObject);
+                                        SpawnInterval = 0f;
+                                    }
+                                    break;
+                            }
+                        }
+                        break;
+
+
+
+                    case SpawningStyles.Wave:
+
+                        if(Spawn_Wave_Trigger || Do_Spawn_Continuous_Waves)
+                        {
+                            if (Do_Spawn_Continuous_Waves)
+                                if (Spawned_Objects.Count > 0)
+                                    return;
+
+                            GameObject[] ReturnedObjects = null;
+
+                            switch (Selected_Spawn_Position_Option)
+                            {
+                                case PositioningOptions.Area:
+                                    if (!Do_Spawn_In_Frustum)
+                                        ReturnedObjects = SpawningFunctions.SpawnWaveInArea(Spawn_Area.GetComponent<SpawnArea>(), Object_To_Spawn, Wave_Spawn_Amount, false, Frustum_Camera);
+                                    else
+                                        ReturnedObjects = SpawningFunctions.SpawnWaveInArea(Spawn_Area.GetComponent<SpawnArea>(), Object_To_Spawn, Wave_Spawn_Amount, false);
+
+                                    break;
+                            }
+
+                            if(ReturnedObjects != null)
+                            {
+                                Spawn_Wave_Trigger = false;
+
+                                foreach(GameObject ToAddObject in ReturnedObjects)
+                                {
+                                    Spawned_Objects.Add(ToAddObject);
+                                }
+                            }
+                        }
+                        break;
+                }
+            }
             
-            if(!Do_Spawn_If_Not_In_Range && Player)
+            
+
+            /*
+            this.InitializeObjectstoCheck();
+            this.CheckSpawnedObjects();
+
+            
+            if(Do_Spawn_If_Not_In_Range && Player)
             {
                 switch (Selected_Distance_Check)
                 {
                     case DistanceCheckingStyles.TwoDimensionalCheck:
-                        Is_In_Range = DistanceChecking.TwoDimensionalCheck(transform, Player.transform, Range_To_Check);
+                        Is_Not_In_Range = DistanceChecking.TwoDimensionalCheck(transform, Player.transform, Range_To_Check);
                         break;
 
                     case DistanceCheckingStyles.ThreeDimensionalCheck:
-                        Is_In_Range = DistanceChecking.ThreeDimensionalCheck(transform, Player.transform, Range_To_Check);
+                        Is_Not_In_Range = DistanceChecking.ThreeDimensionalCheck(transform, Player.transform, Range_To_Check);
                         break;
                 }
             }
 
-            if (Is_In_Range && !Do_Spawn_If_Not_In_Range || Do_Spawn_If_Not_In_Range)
+            if (Is_Not_In_Range && Do_Spawn_If_Not_In_Range || !Do_Spawn_If_Not_In_Range)
             {
                 if (Selected_Spawning_Style == SpawningStyles.Continuous)
                 {
-                    if (Maximal_Spawned_Objects_Alive <= Spawned_Objects.Count && Do_Limit_Objects_Alive)
-                        return;
+                    SpawningFunctions.SpawnObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Object_To_Spawn, false);
 
-                     Debug.Log("yea");
-                    if (SpawnInterval >= Spawn_Delay)
-                    {
-                        bool wasSuccessful = false;
+//                     if (Maximal_Spawned_Objects_Alive <= Spawned_Objects.Count && Do_Limit_Objects_Alive)
+//                         return;
+// 
+//                      Debug.Log("yea");
+//                     if (SpawnInterval >= Spawn_Delay)
+//                     {
+//                         bool wasSuccessful = false;
+// 
+//                         switch (Selected_Spawn_Position_Option)
+//                         {
+//                             case PositioningOptions.Area:
+//                                 wasSuccessful = this.SpawnContiniousInArea();
+//                                 break;
+// 
+//                             case PositioningOptions.Points:
+//                                 wasSuccessful = this.SpawnContiniuosInPoints();
+//                                 break;
+//                         }
+// 
+//                         if (wasSuccessful)
+//                             SpawnInterval = 0f; 
+// 
+//                     }
+//                 }
+// 
+//                 else if(Selected_Spawning_Style == SpawningStyles.Wave)
+//                 {
+//                     if(Do_Spawn_Continuous_Waves)
+//                     {
+//                         this.SpawnWaveInArea();
+//                     }
+                 }
+            }
+                 */
+        }
 
-                        switch (Selected_Spawn_Position_Option)
-                        {
-                            case PositioningOptions.Area:
-                                wasSuccessful = this.SpawnContiniousInArea();
-                                break;
-
-                            case PositioningOptions.Points:
-                                wasSuccessful = this.SpawnContiniuosInPoints();
-                                break;
-                        }
-
-                        if (wasSuccessful)
-                            SpawnInterval = 0f; 
-
-                    }
-                }
-
-                else if(Selected_Spawning_Style == SpawningStyles.Wave)
+        void UpdateDistance()
+        {
+            if (Do_Spawn_If_Not_In_Range && Player)
+            {
+                switch (Selected_Distance_Check)
                 {
-                    if(Do_Spawn_Continuous_Waves)
-                    {
-                        this.SpawnWaveInArea();
-                    }
-                }
+                    case DistanceCheckingStyles.TwoDimensionalCheck:
+                        Is_Not_In_Range = DistanceChecking.TwoDimensionalCheck(transform, Player.transform, Range_To_Check);
+                        break;
 
+                    case DistanceCheckingStyles.ThreeDimensionalCheck:
+                        Is_Not_In_Range = DistanceChecking.ThreeDimensionalCheck(transform, Player.transform, Range_To_Check);
+                        break;
+                }
             }
         }
         
@@ -163,14 +277,14 @@ namespace DDS
         {
             if(Selected_Distance_Check== DistanceCheckingStyles.SphereColliderCheck)
                 if (collider.gameObject == Player)
-                    Is_In_Range = true;
+                    Is_Not_In_Range = false;
         }
 
         void OnTriggerExit(Collider collider)
         {
             if (Selected_Distance_Check == DistanceCheckingStyles.SphereColliderCheck)
                 if (collider.gameObject == Player)
-                    Is_In_Range = false;
+                    Is_Not_In_Range = true;
             
         }
 
@@ -208,7 +322,7 @@ namespace DDS
                 for (int SpawnedIndex = 0; SpawnedIndex < Wave_Spawn_Amount; SpawnedIndex++)
                 {
                     int Iteration = 0;
-                    GameObject bufferObject = Instantiate<GameObject>(Object_To_Spawn, new Vector3(Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition().x, Object_To_Spawn.transform.position.y, Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition().z), Object_To_Spawn.transform.rotation);
+                    GameObject bufferObject = Instantiate<GameObject>(Object_To_Spawn, new Vector3(Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition.x, Object_To_Spawn.transform.position.y, Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition.z), Object_To_Spawn.transform.rotation);
 
                     while (!IsPositionEmpty(bufferObject))
                     {
@@ -222,7 +336,7 @@ namespace DDS
                             
                         }
                         
-                        bufferObject.transform.position = new Vector3(Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition().x, Object_To_Spawn.transform.position.y, Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition().z);
+                        bufferObject.transform.position = new Vector3(Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition.x, Object_To_Spawn.transform.position.y, Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition.z);
                     }
 
                     Iteration = 0;
@@ -247,7 +361,7 @@ namespace DDS
         {
             GameObject bufferObject = null;
 
-            bufferObject = Instantiate<GameObject>(Object_To_Spawn, new Vector3(Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition().x, Object_To_Spawn.transform.position.y, Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition().z), Object_To_Spawn.transform.rotation);
+            bufferObject = Instantiate<GameObject>(Object_To_Spawn, new Vector3(Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition.x, Object_To_Spawn.transform.position.y, Spawn_Area.GetComponent<SpawnArea>().GetRandomPosition.z), Object_To_Spawn.transform.rotation);
             if (!Do_Spawn_In_Frustum)
                 if (IsVisible(bufferObject))
                     Destroy(bufferObject);
@@ -269,7 +383,7 @@ namespace DDS
                 bool DestroyObject = false;
 
                 int Position = Random.Range(0, Spawn_Positions.Count);
-                Vector3 RandomPosition = new Vector3(Spawn_Positions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().x, Object_To_Spawn.transform.position.y, Spawn_Positions[Position].GetComponent<SpawnPosition>().GetSpawnPosition().z);
+                Vector3 RandomPosition = new Vector3(Spawn_Positions[Position].GetComponent<SpawnPosition>().GetSpawnPosition.x, Object_To_Spawn.transform.position.y, Spawn_Positions[Position].GetComponent<SpawnPosition>().GetSpawnPosition.z);
                 bufferObject = Instantiate<GameObject>(Object_To_Spawn, RandomPosition, Object_To_Spawn.transform.rotation);
 
                 Ray testRay = new Ray(bufferObject.GetComponent<Renderer>().bounds.center, Frustum_Camera.transform.position);
@@ -387,7 +501,7 @@ namespace DDS
 
             DesiredSpawnPositionIndex = DynamicSpawned.Spawn_Positions.Count;
 
-            EditorGUILayout.Toggle("In range:", DynamicSpawned.Is_In_Range);
+            EditorGUILayout.Toggle("In range:", DynamicSpawned.Is_Not_In_Range);
 
             DoShowTestGameSettingsContent = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), DoShowTestGameSettingsContent, "Test Game Settings", true);
 
@@ -446,7 +560,7 @@ namespace DDS
                 DynamicSpawned.Do_Spawn_If_Not_In_Range = EditorGUILayout.Toggle(new GUIContent("Spawn if not in Range: ", "Spawn the Object only if the Player is in range"), DynamicSpawned.Do_Spawn_If_Not_In_Range);
 
 
-                if (!DynamicSpawned.Do_Spawn_If_Not_In_Range)
+                if (DynamicSpawned.Do_Spawn_If_Not_In_Range)
                 {
                     EditorGUI.indentLevel++;
                     string[] PlayerIdentificationOptions = new string[3];

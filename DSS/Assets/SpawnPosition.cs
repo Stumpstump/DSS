@@ -9,17 +9,20 @@ public class SpawnPosition : MonoBehaviour
     /// <summary>
     /// Returns the Spawn position of this Object
     /// </summary>
-    public Vector3 GetSpawnPosition()
+    public Vector3 GetSpawnPosition
     {
-        if(UseYAxis)
+        get
         {
-            return transform.position;
-        }
+            if (UseYAxis)
+            {
+                return transform.position;
+            }
 
-        else
-        {
-            return new Vector3(transform.position.x, 0, transform.position.z);
-        }
+            else
+            {
+                return new Vector3(transform.position.x, 0, transform.position.z);
+            }
 
+        }
     }
 }

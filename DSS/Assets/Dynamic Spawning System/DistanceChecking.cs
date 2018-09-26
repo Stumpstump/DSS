@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
         
-    public class DistanceChecking : MonoBehaviour
+    static public class DistanceChecking 
     {
         /// <summary>
         /// returns if the (X,Z) distance of the given Objects is smaller than the given Max Distance  
@@ -32,7 +32,7 @@ using UnityEngine;
             DistanceX *= DistanceX;
             DistanceZ *= DistanceZ;
 
-            return Mathf.Sqrt(DistanceX + DistanceZ) <= MaxDistance;
+            return Mathf.Sqrt(DistanceX + DistanceZ) >= MaxDistance;
         }
 
     /// <summary>
@@ -69,7 +69,7 @@ using UnityEngine;
         DistanceZ *= DistanceZ;
         DistanceY *= DistanceY;
 
-        return Mathf.Sqrt(DistanceX + DistanceZ + DistanceY) <= MaxDistance;
+        return Mathf.Sqrt(DistanceX + DistanceZ + DistanceY) >= MaxDistance;
     }
 }
 
