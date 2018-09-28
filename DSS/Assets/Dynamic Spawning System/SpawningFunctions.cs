@@ -11,7 +11,10 @@ namespace DDS
 {
     public static class SpawningFunctions
     {
+        static public int Test;
         static private int MaxPositionChecks = 50;
+        static public List<GameObject> FrustumIgnoredObjects;
+                     
 
         public static GameObject SpawnObjectInArea(SpawnArea Area, GameObject DesiredObject, bool UseAreaHeight)
         {
@@ -166,7 +169,6 @@ namespace DDS
             GameObject BufferObject = ObjectToCheck;
             BufferObject.transform.position = DesiredPosition;
 
-
             if (!BufferObject.GetComponent<Renderer>())
                 return false;
 
@@ -189,11 +191,35 @@ namespace DDS
                 {
                     RaycastHit hit;
                     if (!Physics.Linecast(RayCastPositions[index] + BoundsToCheck.center, FrustumCamera.transform.position, out hit))
+                            return true;
+                    else
                     {
-                        return true;
+                        bool IsIgnoredObject = false;
+                        if (FrustumIgnoredObjects != null)
+                        {
+                            for (int IgnoredObjectIndex = 0; IgnoredObjectIndex < FrustumIgnoredObjects.Count; IgnoredObjectIndex++)
+                            {
+                                if (FrustumIgnoredObjects[IgnoredObjectIndex] != null)
+                                {
+                                    if (FrustumIgnoredObjects[IgnoredObjectIndex].transform != null)
+                                        if (FrustumIgnoredObjects[IgnoredObjectIndex].gameObject != null)
+                                            if (FrustumIgnoredObjects[IgnoredObjectIndex].gameObject == hit.transform.gameObject)
+                                            {
+                                                IsIgnoredObject = true;
+                                            }
+                                }
+                            }
+                        }
+
+                        if (IsIgnoredObject)
+                            return true;
                     }
+                     
+                    
 
                 }
+
+
 
                 return false;
             }
@@ -245,7 +271,47 @@ namespace DDS
             return false;
         }
 
+        public static GameObject[] GetAllIgnoredObjects(List<IgnoredObject> Objects)
+        {
+            List<GameObject> ObjectsToReturn = new List<GameObject>();
+
+            for (int ObjectIndex = 0; ObjectIndex < Objects.Count; ObjectIndex++)
+            {
+                if (Objects[ObjectIndex].Object != null)
+                {
+                    if (Objects[ObjectIndex].Object.GetComponent<Collider>())
+                        ObjectsToReturn.Add(Objects[ObjectIndex].Object);
+
+                    if (Objects[ObjectIndex].IgnoreParent)
+                        if (Objects[ObjectIndex].Object.transform.parent)
+                            if (Objects[ObjectIndex].Object.transform.parent.GetComponent<Collider>())
+                                ObjectsToReturn.Add(Objects[ObjectIndex].Object.transform.parent.gameObject);
+
+
+                    if (Objects[ObjectIndex].IgnoreChildrens)
+                    {
+                        for (int ChildrenIndex = 0; ChildrenIndex < Objects[ObjectIndex].Object.transform.childCount; ChildrenIndex++)
+                        {
+                            if (Objects[ObjectIndex].Object.transform.GetChild(ChildrenIndex).GetComponent<Collider>())
+                                ObjectsToReturn.Add(Objects[ObjectIndex].Object.transform.GetChild(ChildrenIndex).gameObject);
+                        }
+                    }
+                }
+
+            }
+
+            GameObject[] ReturnField = new GameObject[ObjectsToReturn.Count];
+
+            for (int Index = 0; Index < ObjectsToReturn.Count; Index++)
+                ReturnField[Index] = ObjectsToReturn[Index];
+            if (ReturnField.Length > 0)
+                foreach (GameObject G in ReturnField)
+                    Debug.Log(G.name);
+
+
+            return ReturnField;
+        }
     }
 
-    
+
 }

@@ -10,6 +10,12 @@ namespace DDS
     /// </summary>
     public class Spawner : MonoBehaviour
     {
+        public List<GameObject> IgnoredObjects;
+
+        public List<int> TestList;
+
+        public bool ShowIgnoredObjects;
+
         public bool Spawn_Wave_Trigger = false;
 
         public int Wave_Spawn_Amount;
@@ -493,7 +499,9 @@ namespace DDS
 
         int SpawnPointPositionsArraySize;
 
-        int DesiredSpawnPositionIndex;
+        int DesiredSpawnPositionIndex, DesiredIgnoredObjectIndex;
+
+        
 
         override public void OnInspectorGUI()
         {
@@ -629,9 +637,108 @@ namespace DDS
 
                 if(!DynamicSpawned.Do_Spawn_In_Frustum)
                 {
-                    EditorGUI.indentLevel++;
                     DynamicSpawned.Frustum_Camera= (Camera)EditorGUILayout.ObjectField(new GUIContent("Camera: ", "Camera to check the frustum of"), DynamicSpawned.Frustum_Camera, typeof(Camera), true);
-                    EditorGUI.indentLevel--;
+
+                    DynamicSpawned.ShowIgnoredObjects = EditorGUI.Foldout(EditorGUILayout.GetControlRect(), DynamicSpawned.ShowIgnoredObjects, "Ignored Objects", true);
+                    
+
+                    if (DynamicSpawned.ShowIgnoredObjects)
+                    {
+                        if (DynamicSpawned.IgnoredObjects == null)
+                        {
+                            Debug.Log("new list");
+                            DynamicSpawned.IgnoredObjects = new List<GameObject>();
+                        }
+
+                        
+                        DesiredIgnoredObjectIndex = DynamicSpawned.IgnoredObjects.Count;
+
+//                         EditorGUI.indentLevel++;
+                         DesiredIgnoredObjectIndex = EditorGUILayout.IntField("Ignored Objects size: ", DesiredIgnoredObjectIndex);
+                        if (DesiredIgnoredObjectIndex > 100)
+                            DesiredIgnoredObjectIndex = 100;
+                        if (DesiredIgnoredObjectIndex < 0)
+                            DesiredIgnoredObjectIndex = 0;
+
+                        while (DynamicSpawned.IgnoredObjects.Count > DesiredIgnoredObjectIndex)
+                        {
+                            DynamicSpawned.IgnoredObjects.RemoveAt(DynamicSpawned.IgnoredObjects.Count - 1);
+                        }
+
+                        while (DynamicSpawned.IgnoredObjects.Count < DesiredIgnoredObjectIndex)
+                        {
+                            DynamicSpawned.IgnoredObjects.Add(null);
+                        }
+
+
+                        EditorGUI.indentLevel++;
+
+                        List<GameObject> Test = new List<GameObject>();
+
+                        EditorGUI.indentLevel++;
+                        int loop = 0;
+                        for (int Index = 0; Index < DynamicSpawned.IgnoredObjects.Count; Index++)
+                        {
+                            loop++;
+                            if(loop > 10)
+                            {
+                                Debug.Log(Index);
+                            }
+                            DynamicSpawned.IgnoredObjects[Index] = (GameObject)EditorGUILayout.ObjectField("Object: ", DynamicSpawned.IgnoredObjects[Index], typeof(GameObject), true);
+                        }
+
+
+                        EditorGUI.indentLevel--;
+
+                        for (int ObjectIndex = 0; ObjectIndex < DynamicSpawned.IgnoredObjects.Count; ObjectIndex++)
+                        {
+                            Debug.Log("Made");
+                            if (DynamicSpawned.IgnoredObjects[ObjectIndex] != null)
+                            {
+                                if (DynamicSpawned.IgnoredObjects[ObjectIndex].GetComponent<Collider>())
+                                    Test.Add(DynamicSpawned.IgnoredObjects[ObjectIndex]);
+// 
+//                                 
+                                    if (DynamicSpawned.IgnoredObjects[ObjectIndex].transform.parent)
+                                        if (DynamicSpawned.IgnoredObjects[ObjectIndex].transform.parent.GetComponent<Collider>())
+                                            Test.Add(DynamicSpawned.IgnoredObjects[ObjectIndex].transform.parent.gameObject);
+
+
+                 
+                                    for (int ChildrenIndex = 0; ChildrenIndex < DynamicSpawned.IgnoredObjects[ObjectIndex].transform.childCount; ChildrenIndex++)
+                                    {
+                                        if (DynamicSpawned.IgnoredObjects[ObjectIndex].transform.GetChild(ChildrenIndex).GetComponent<Collider>())
+                                            Test.Add(DynamicSpawned.IgnoredObjects[ObjectIndex].transform.GetChild(ChildrenIndex).gameObject);
+                                    }
+                                
+                            }
+                        }
+
+                        SpawningFunctions.FrustumIgnoredObjects = Test;
+
+//                         // 
+//                         //                         EditorGUI.indentLevel++;
+//                         // 
+//                         //                         for (int Index = 0; Index < DynamicSpawned.IgnoredObjects.Count; Index++)
+//                         //                         {
+//                         //                             IgnoredObject BufferIgnoredObject = DynamicSpawned.IgnoredObjects[Index];
+//                         // 
+//                         //                             BufferIgnoredObject.Object = (GameObject)EditorGUILayout.ObjectField("Object: ", BufferIgnoredObject.Object, typeof(GameObject), true);
+//                         //                             EditorGUI.indentLevel++;
+//                         // 
+//                         //                             BufferIgnoredObject.IgnoreParent = EditorGUILayout.Toggle(new GUIContent("Ignore Parent: "), BufferIgnoredObject.IgnoreParent);
+//                         //                             BufferIgnoredObject.IgnoreChildrens = EditorGUILayout.Toggle(new GUIContent("Ignore Children: "), BufferIgnoredObject.IgnoreChildrens);
+//                         //                             EditorGUI.indentLevel--;
+//                         //                             DynamicSpawned.IgnoredObjects[Index] = BufferIgnoredObject;
+//                         //                         }
+//                         // 
+//                         // 
+//                         //                         EditorGUI.indentLevel--;
+//                         //                         EditorGUI.indentLevel--;
+
+                    }
+
+
                 }
 
 
@@ -712,9 +819,6 @@ namespace DDS
                             EditorGUI.indentLevel--;
                         }
 
-
-
-
                         if (GUILayout.Button("Create Position"))
                         {
                             DesiredSpawnPositionIndex++;
@@ -729,10 +833,14 @@ namespace DDS
                         }
 
                         break;
-
-
                 }
             }
+        }
+
+        void Awake()
+        {
+            var DynamicSpawned = target as Spawner;
+
         }
     }
 
