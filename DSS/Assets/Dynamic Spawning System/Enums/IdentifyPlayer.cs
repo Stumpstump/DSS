@@ -11,6 +11,7 @@ namespace DDS
     /// <summary>
     /// The Options which we can get the Player Object with
     /// </summary>
+    [System.Serializable]
     public enum IdentifyPlayer
     {
         byTag, byName, byField

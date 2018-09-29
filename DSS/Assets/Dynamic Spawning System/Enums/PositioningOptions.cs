@@ -9,6 +9,7 @@ namespace DDS
     /// <summary>
     /// Options to decide where the Objects gets spawned
     /// </summary>
+    [System.Serializable]
     public enum PositioningOptions
     {
         Area, Points

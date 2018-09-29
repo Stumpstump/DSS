@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace DDS
 {
+    [System.Serializable]
     public struct IgnoredObject
     {
         public GameObject Object;
