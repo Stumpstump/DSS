@@ -5,11 +5,11 @@ using UnityEditor;
 
 namespace DDS
 {
-    /// <summary>
-    /// The basic Spawner Object
-    /// </summary>
     public class Spawner : MonoBehaviour
     {
+        [SerializeField]
+        bool UseOcclusionCulling;
+
         [SerializeField]
         public List<GameObject> IgnoredObjects;
 
@@ -25,6 +25,8 @@ namespace DDS
         [SerializeField]
         public bool Spawn_Wave_Trigger = false;
 
+
+   
         [SerializeField]
         public int Wave_Spawn_Amount;
 
@@ -81,6 +83,11 @@ namespace DDS
         /// <summary>
         /// List of the Spawned Objects which are alive
         /// </summary>
+        /// 
+
+        [SerializeField]
+        public SpawnAbleObject[] Objects_To_Spawn;
+
 
         [SerializeField]
         public List<GameObject> Spawned_Objects;
@@ -145,7 +152,7 @@ namespace DDS
 
         void Update()
         {
-
+            SpawningFunctions.UseOcclusionCulling = UseOcclusionCulling;
             this.InitializeObjectstoCheck();
             this.CheckSpawnedObjects();
 
@@ -169,9 +176,9 @@ namespace DDS
                                 case PositioningOptions.Area:
 
                                     if (!Do_Spawn_In_Frustum)
-                                        bufferObject = SpawningFunctions.SpawnObjectInArea(Spawn_Area.GetComponent<SpawnArea>(), Object_To_Spawn, false, Frustum_Camera);
+                                        bufferObject = SpawningFunctions.SpawnPriorityObjectInArea(Spawn_Area.GetComponent<SpawnArea>(), Objects_To_Spawn, false, Frustum_Camera);
                                     else
-                                        bufferObject = SpawningFunctions.SpawnObjectInArea(Spawn_Area.GetComponent<SpawnArea>(), Object_To_Spawn, false);
+                                        bufferObject = SpawningFunctions.SpawnPriorityObjectInArea(Spawn_Area.GetComponent<SpawnArea>(), Objects_To_Spawn, false);
 
                                     if (bufferObject)
                                     {
@@ -182,9 +189,10 @@ namespace DDS
 
                                 case PositioningOptions.Points:
                                     if (!Do_Spawn_In_Frustum)
-                                        bufferObject = SpawningFunctions.SpawnObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Object_To_Spawn, false, Frustum_Camera);
+                                     bufferObject = SpawningFunctions.SpawnPriorityObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Objects_To_Spawn, false, Frustum_Camera);
                                     else
-                                        bufferObject = SpawningFunctions.SpawnObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Object_To_Spawn, false);
+                                        bufferObject = SpawningFunctions.SpawnPriorityObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Objects_To_Spawn, false);
+                              //      bufferObject = SpawningFunctions.SpawnObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Object_To_Spawn, false);
 
                                     if (bufferObject)
                                     {
@@ -375,6 +383,8 @@ namespace DDS
         SerializedProperty SelectedDistanceCheck;
         SerializedProperty PlayerIdentificationData;
         SerializedProperty FrustumCamera;
+        SerializedProperty UseOcclusionCulling;
+        SerializedProperty ObjectsToSpawn;
 
         GUILayoutOption StandardLayout = GUILayout.Height(15);
 
@@ -392,6 +402,15 @@ namespace DDS
                 DynamicSpawned.Spawned_Objects = new List<GameObject>();
             }
 
+            if(DynamicSpawned.Objects_To_Spawn == null)
+            {
+                DynamicSpawned.Objects_To_Spawn = new SpawnAbleObject[0];
+            }
+
+  
+
+            ObjectsToSpawn = this.serializedObject.FindProperty("Objects_To_Spawn");
+            UseOcclusionCulling = this.serializedObject.FindProperty("UseOcclusionCulling");
             ShowPointPositions = this.serializedObject.FindProperty("Do_Show_Point_Positions");
             IgnoredObjects = this.serializedObject.FindProperty("IgnoredObjects");
             SpawnDelay = this.serializedObject.FindProperty("Spawn_Delay");
@@ -422,17 +441,43 @@ namespace DDS
 
         override public void OnInspectorGUI()
         {
-            EditorGUI.BeginChangeCheck();
             this.serializedObject.Update();
 
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(IsNotInRange, new GUIContent("In range:"), StandardLayout);
             EditorGUI.EndChangeCheck();
 
+            //Test start
+
+            
 
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(ObjectToSpawn, new GUIContent("Object:"), StandardLayout);
-            EditorGUI.EndChangeCheck();
+
+            SerializedProperty ObjectSize = ObjectsToSpawn.FindPropertyRelative("Array.size");
+
+
+            EditorGUILayout.PropertyField(ObjectSize, new GUIContent("Objects to Spawn: "), StandardLayout);
+
+            if (ObjectSize.intValue > 20)
+                ObjectSize.intValue = 20;
+
+           
+            for (int i = 0; i < ObjectSize.intValue; i++)
+            {
+                EditorGUI.indentLevel++;
+                string Name = "Empty";
+                if (ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue != null)
+                    Name = ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue.name;
+
+
+                EditorGUILayout.PropertyField(ObjectsToSpawn.GetArrayElementAtIndex(i), new GUIContent(Name), true);
+                
+                EditorGUI.indentLevel--;
+
+            }
+
+
+            //Test end
 
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(SelectedSpawningStyle, new GUIContent("Spawn Style: "), StandardLayout);
@@ -566,10 +611,10 @@ namespace DDS
                 EditorGUI.EndChangeCheck();
 
                 EditorGUI.BeginChangeCheck();
-                EditorGUILayout.PropertyField(ShowIgnoredObjects, new GUIContent("Show Ignored Objects: "), StandardLayout);
+                EditorGUILayout.PropertyField(UseOcclusionCulling, new GUIContent("Occlusion Culling: "), StandardLayout);
                 EditorGUI.EndChangeCheck();
 
-                if (ShowIgnoredObjects.boolValue)
+                if (UseOcclusionCulling.boolValue)
                 {
                     EditorGUI.BeginChangeCheck();
                     EditorGUILayout.PropertyField(IgnoredObjects, new GUIContent("Ignored Objects: "), true);
