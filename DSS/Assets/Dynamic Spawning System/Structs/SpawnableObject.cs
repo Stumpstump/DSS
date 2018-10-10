@@ -9,5 +9,6 @@ namespace DDS
         public GameObject ObjectToSpawn;
         public bool ApplyLogicToChilds;
         public float ChanceToSpawn;
+        public float AdaptableSpawnHeight;
     }
 }

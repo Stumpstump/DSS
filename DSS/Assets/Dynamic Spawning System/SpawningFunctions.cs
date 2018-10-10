@@ -15,332 +15,78 @@ namespace DDS
         static public bool UseOcclusionCulling;
         static private int MaxPositionChecks = 50;
         static public List<GameObject> FrustumIgnoredObjects;
-                     
 
-        public static GameObject SpawnObjectInArea(SpawnArea Area, GameObject DesiredObject, bool UseAreaHeight)
-        {
-            Vector3 Position = GetAreaPosition(Area, DesiredObject.transform.position.y, UseAreaHeight);
-
-            int Loop = 0;
-
-            while(IsPositionBlocked(DesiredObject, Position))
-            {
-                Position = GetAreaPosition(Area, DesiredObject.transform.position.y, UseAreaHeight);
-                if (Loop > MaxPositionChecks)
-                    return null;                
-            }
-
-            return GameObject.Instantiate(DesiredObject, Position, DesiredObject.transform.rotation);
-        }
-
-        public static GameObject SpawnObjectInArea(SpawnArea Area, GameObject DesiredObject, bool UseAreaHeight, Camera FrustumCamera)
-        {
-            Vector3 Position = GetAreaPosition(Area, DesiredObject.transform.position.y, UseAreaHeight);
-            int Loop = 0;
-
-            while (IsPositionBlocked(DesiredObject, Position) || IsVisible(FrustumCamera, DesiredObject, Position))
-            {
-                Position = GetAreaPosition(Area, DesiredObject.transform.position.y, UseAreaHeight);
-                Loop++;
-                if (Loop > MaxPositionChecks)
-                    return null;
-            }
-
-            return GameObject.Instantiate(DesiredObject, Position, DesiredObject.transform.rotation);
-        }
-
-        public static GameObject[] SpawnWaveInArea(SpawnArea Area, GameObject DesiredObject, int SpawnAmount, bool UseAreaHeight)
-        {
-            GameObject[] SpawnedObjects = new GameObject[SpawnAmount];
-
-            for(int ObjectIndex = 0; ObjectIndex < SpawnAmount; ObjectIndex++)
-            {
-                Vector3 Position = GetAreaPosition(Area, DesiredObject.transform.position.y, UseAreaHeight);
-
-                int Loop = 0;
-
-                while(IsPositionBlocked(DesiredObject, Position))
-                {
-                    Loop++;
-                    if (Loop > MaxPositionChecks)
-                    {
-                        for (int index = 0; index < SpawnedObjects.Length; index++)
-                        {
-                            GameObject.Destroy(SpawnedObjects[index]);
-                        }
-
-                        return null;
-                    }
-
-                    Position = GetAreaPosition(Area, DesiredObject.transform.position.y, UseAreaHeight);
-                }
-
-                SpawnedObjects[ObjectIndex] = GameObject.Instantiate(DesiredObject, Position, DesiredObject.transform.rotation);
-            }
-            
-            return SpawnedObjects;
-        }
-
-
-
-        public static GameObject[] SpawnWaveInArea(SpawnArea Area, GameObject DesiredObject, int SpawnAmount, bool UseAreaHeight, Camera FrustumCamera)
-        {
-            GameObject[] SpawnedObjects = new GameObject[SpawnAmount];
-
-            for (int ObjectIndex = 0; ObjectIndex < SpawnAmount; ObjectIndex++)
-            {
-                Vector3 Position = GetAreaPosition(Area, DesiredObject.transform.position.y, UseAreaHeight);
-
-                int Loop = 0;
-
-                while (IsPositionBlocked(DesiredObject, Position) || IsVisible(FrustumCamera, DesiredObject, Position))
-                {
-                    Loop++;
-                    if (Loop > MaxPositionChecks)
-                    {                           
-                        for (int index = 0; index < SpawnedObjects.Length; index++)
-                        {                        
-                            GameObject.Destroy(SpawnedObjects[index]);
-                        }
-                        return null;
-                    }
-
-                    Position = GetAreaPosition(Area, DesiredObject.transform.position.y, UseAreaHeight);
-                }
-                SpawnedObjects[ObjectIndex] = GameObject.Instantiate(DesiredObject, Position, DesiredObject.transform.rotation);
-            }
-
-            return SpawnedObjects;
-        }
 
         public static GameObject SpawnPriorityObjectInArea(SpawnArea Area, SpawnAbleObject[] Objects, bool UseAreaHeight, Camera FrustumCamera)
         {
             int IndexOfObject = GetHighestSpawnPriority(Objects);
 
-            Vector3 Position = GetAreaPosition(Area, Objects[IndexOfObject].ObjectToSpawn.transform.position.y, UseAreaHeight);
+            Vector3[] Position;
+            if (!Area.GetRandomCheckedPosition(Objects[IndexOfObject], 1, FrustumCamera, out Position))
+                return null;
 
-            int Loop = 0;
-
-            bool ChildIsBlockedOrVisible = false;
-
-            if (Objects[IndexOfObject].ApplyLogicToChilds)
-            {
-                for (int index = 0; index < Objects[IndexOfObject].ObjectToSpawn.transform.childCount; index++)
-                {
-                    if (IsPositionBlockedChild(Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(index).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position) || IsVisibleChild(FrustumCamera, Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(index).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position))
-                    {
-                        ChildIsBlockedOrVisible = true;
-                        break;
-                    }
-                }
-            }
-
-
-            while (IsPositionBlocked(Objects[IndexOfObject].ObjectToSpawn, Position) || IsVisible(FrustumCamera, Objects[IndexOfObject].ObjectToSpawn, Position) || ChildIsBlockedOrVisible)
-            {
-                ChildIsBlockedOrVisible = false;
-                Loop++;
-                Position = GetAreaPosition(Area, Objects[IndexOfObject].ObjectToSpawn.transform.position.y, UseAreaHeight);
-
-                for (int index = 0; index < Objects[IndexOfObject].ObjectToSpawn.transform.childCount; index++)
-                {
-                    if (IsPositionBlockedChild(Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(index).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position) || IsVisibleChild(FrustumCamera, Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(index).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position))
-                    {
-                        ChildIsBlockedOrVisible = true;
-                        break;
-                    }
-                }
-                if (Loop > MaxPositionChecks)
-                    return null;
-            }
-
-            return GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Position, Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
+            return GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Position[0], Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
         }
 
-        public static GameObject SpawnPriorityObjectInArea(SpawnArea Area, SpawnAbleObject[] Objects, bool UseAreaHeight)
+        public static GameObject SpawnPriorityObjectAtSpawnPoint(SpawnPosition Point, SpawnAbleObject[] Objects, Camera FrustumCamera)
         {
             int IndexOfObject = GetHighestSpawnPriority(Objects);
 
-            Vector3 Position = GetAreaPosition(Area, Objects[IndexOfObject].ObjectToSpawn.transform.position.y, UseAreaHeight);
+            Vector3 SpawnPosition;
+            if (!Point.GetCheckedSpawnPosition(Objects[IndexOfObject], FrustumCamera, out SpawnPosition))
+                return null;
 
-            int Loop = 0;
+            
 
-            bool ChildIsBlockedOrVisible = false;
-
-            if (Objects[IndexOfObject].ApplyLogicToChilds)
-            {
-                for (int index = 0; index < Objects[IndexOfObject].ObjectToSpawn.transform.childCount; index++)
-                {
-                    if (IsPositionBlockedChild(Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(index).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position))
-                    {
-                        ChildIsBlockedOrVisible = true;
-                        break;
-                    }
-                }
-            }
-
-
-            while (IsPositionBlocked(Objects[IndexOfObject].ObjectToSpawn, Position) || ChildIsBlockedOrVisible)
-            {
-                ChildIsBlockedOrVisible = false;
-                Loop++;
-                Position = GetAreaPosition(Area, Objects[IndexOfObject].ObjectToSpawn.transform.position.y, UseAreaHeight);
-
-                for (int index = 0; index < Objects[IndexOfObject].ObjectToSpawn.transform.childCount; index++)
-                {
-                    if (IsPositionBlockedChild(Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(index).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position))
-                    {
-                        ChildIsBlockedOrVisible = true;
-                        break;
-                    }
-                }
-                if (Loop > MaxPositionChecks)
-                    return null;
-            }
-
-            return GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Position, Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
+            return GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, SpawnPosition, Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
         }
 
-        public static GameObject SpawnObjectAtSpawnPoint(SpawnPosition SpawnPoint, GameObject DesiredObject, bool UsePointHeight)
-        {
-
-            Vector3 Position = GetSpawnPoint(SpawnPoint, DesiredObject.transform.position.y, UsePointHeight);
-
-            int Loop = 0;
-
-            while (IsPositionBlocked(DesiredObject, Position))
-            {
-                Loop++;
-                Position = GetSpawnPoint(SpawnPoint, DesiredObject.transform.position.y, UsePointHeight);
-                if (Loop > MaxPositionChecks)
-                    return null;
-            }
-
-            return GameObject.Instantiate(DesiredObject, Position, DesiredObject.transform.rotation);
-        }
-
-        public static GameObject SpawnObjectAtSpawnPoint(SpawnPosition SpawnPoint, GameObject DesiredObject, bool UsePointHeight, Camera FrustumCamera)
-        {
-
-            Vector3 Position = GetSpawnPoint(SpawnPoint, DesiredObject.transform.position.y, UsePointHeight);
-
-            int Loop = 0;
-
-            while (IsPositionBlocked(DesiredObject, Position) || IsVisible(FrustumCamera, DesiredObject, Position))
-            {
-                Loop++;
-                Position = GetSpawnPoint(SpawnPoint, DesiredObject.transform.position.y, UsePointHeight);
-                if (Loop > MaxPositionChecks)
-                    return null;
-            }
-
-            return GameObject.Instantiate(DesiredObject, Position, DesiredObject.transform.rotation);
-        }
-
-        public static GameObject SpawnPriorityObjectAtSpawnPoint(SpawnPosition SpawnPoint, SpawnAbleObject[] Objects, bool UsePointHeight, Camera FrustumCamera)
+        public static GameObject[] SpawnWaveInArea(SpawnArea Area, SpawnAbleObject[] Objects, int ObjectAmount, Camera FrustumCamera)
         {
             int IndexOfObject = GetHighestSpawnPriority(Objects);
 
-            Vector3 Position = GetSpawnPoint(SpawnPoint, Objects[IndexOfObject].ObjectToSpawn.transform.position.y, UsePointHeight);
+            Vector3[] Positions;
 
-            int Loop = 0;
+            if (!Area.GetRandomCheckedPosition(Objects[IndexOfObject], ObjectAmount, FrustumCamera, out Positions))
+                return null;
 
-            bool ChildIsBlockedOrVisible = false;
+            GameObject[] ObjectsToReturn = new GameObject[ObjectAmount];
 
-            if(Objects[IndexOfObject].ApplyLogicToChilds)
+            for(int i = 0; i < ObjectAmount; i++)
             {
-                for(int index = 0; index < Objects[IndexOfObject].ObjectToSpawn.transform.childCount; index++)
-                {
-                    if(IsPositionBlockedChild(Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(index).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position) || IsVisibleChild(FrustumCamera, Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(index).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position))
-                    {
-                        ChildIsBlockedOrVisible = true;
-                        break;
-                    }
-                }
+                ObjectsToReturn[i] = GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Positions[i], Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
             }
 
-
-            while (IsPositionBlocked(Objects[IndexOfObject].ObjectToSpawn, Position) || IsVisible(FrustumCamera, Objects[IndexOfObject].ObjectToSpawn, Position) || ChildIsBlockedOrVisible)
-            {
-                ChildIsBlockedOrVisible = false;
-                Loop++;
-                Position = GetSpawnPoint(SpawnPoint, Objects[IndexOfObject].ObjectToSpawn.transform.position.y, UsePointHeight);
-
-                for (int index = 0; index < Objects[IndexOfObject].ObjectToSpawn.transform.childCount; index++)
-                {
-                    if (IsPositionBlockedChild(Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(index).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position) || IsVisibleChild(FrustumCamera, Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(index).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position))
-                    {
-                        ChildIsBlockedOrVisible = true;
-                        break;
-                    }
-                }
-                if (Loop > MaxPositionChecks)
-                    return null;
-            }
-
-            return GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Position, Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
+            return ObjectsToReturn;
         }
 
-
-        public static GameObject SpawnPriorityObjectAtSpawnPoint(SpawnPosition SpawnPoint, SpawnAbleObject[] Objects, bool UsePointHeight)
+        public static bool IsAnyChildBlocked(GameObject Object, Vector3 DesiredPosition)
         {
-            int IndexOfObject = GetHighestSpawnPriority(Objects);
-
-            Vector3 Position = GetSpawnPoint(SpawnPoint, Objects[IndexOfObject].ObjectToSpawn.transform.position.y, UsePointHeight);
-
-            int Loop = 0;
-
-            bool ChildBlocked = false;
-
-            if (Objects[IndexOfObject].ApplyLogicToChilds)
+            for(int ChildIndex = 0; ChildIndex < Object.transform.childCount; ChildIndex++)
             {
-                for (int Child = 0; Child < Objects[IndexOfObject].ObjectToSpawn.transform.childCount; Child++)
-                {
-                    if (IsPositionBlockedChild(Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(Child).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position))
-                    {
-                        ChildBlocked = true;
-                    }
-                }
+                if (IsPositionBlockedChild(Object.transform.GetChild(ChildIndex).gameObject, Object, DesiredPosition))
+                    return true;
             }
 
-            while (IsPositionBlocked(Objects[IndexOfObject].ObjectToSpawn, Position) || ChildBlocked)
-            {
-                Loop++;
-                Position = GetSpawnPoint(SpawnPoint, Objects[IndexOfObject].ObjectToSpawn.transform.position.y, UsePointHeight);
-
-                ChildBlocked = false;
-
-                if (Objects[IndexOfObject].ApplyLogicToChilds)
-                {
-                    for (int Child = 0; Child < Objects[IndexOfObject].ObjectToSpawn.transform.childCount; Child++)
-                    {
-                        if (IsPositionBlockedChild(Objects[IndexOfObject].ObjectToSpawn.transform.GetChild(Child).gameObject, Objects[IndexOfObject].ObjectToSpawn, Position))
-                        {
-                            ChildBlocked = true;
-                        }
-                    }
-                }
-
-                if (Loop > MaxPositionChecks)
-                    return null;
-            }
-
-            return GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Position, Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
+            return false;
         }
+
+        public static bool IsAnyChildVisible(GameObject Object, Vector3 DesiredPosition, Camera FrustumCamera)
+        {
+            for (int ChildIndex = 0; ChildIndex < Object.transform.childCount; ChildIndex++)
+            {
+                if (IsVisibleChild(FrustumCamera, Object.transform.GetChild(ChildIndex).gameObject, Object, DesiredPosition))
+                    return true;
+            }
+
+            return false;
+        }
+
 
         private static Vector3 GetSpawnPoint(SpawnPosition SpawnPoint, float ObjectHeight, bool UsePointHeight)
         {
             Vector3 Position = SpawnPoint.GetSpawnPosition;
             if (!UsePointHeight)
-                Position.y = ObjectHeight;
-
-            return Position;
-        }
-
-        private static Vector3 GetAreaPosition(SpawnArea Area, float ObjectHeight, bool UseAreaHeight)
-        {
-            Vector3 Position = Area.GetRandomPosition;
-            if (!UseAreaHeight)
                 Position.y = ObjectHeight;
 
             return Position;
@@ -664,6 +410,5 @@ namespace DDS
             return 0;
         }
     }
-
-
 }
+

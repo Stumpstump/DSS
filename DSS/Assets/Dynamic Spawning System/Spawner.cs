@@ -142,6 +142,8 @@ namespace DDS
         [SerializeField]
         float SpawnInterval;
 
+        bool DoTest = true;
+
         void Start()
         {
 
@@ -152,6 +154,10 @@ namespace DDS
 
         void Update()
         {
+            ///Test Mode
+
+
+            
             SpawningFunctions.UseOcclusionCulling = UseOcclusionCulling;
             this.InitializeObjectstoCheck();
             this.CheckSpawnedObjects();
@@ -178,7 +184,7 @@ namespace DDS
                                     if (!Do_Spawn_In_Frustum)
                                         bufferObject = SpawningFunctions.SpawnPriorityObjectInArea(Spawn_Area.GetComponent<SpawnArea>(), Objects_To_Spawn, false, Frustum_Camera);
                                     else
-                                        bufferObject = SpawningFunctions.SpawnPriorityObjectInArea(Spawn_Area.GetComponent<SpawnArea>(), Objects_To_Spawn, false);
+                                        bufferObject = SpawningFunctions.SpawnPriorityObjectInArea(Spawn_Area.GetComponent<SpawnArea>(), Objects_To_Spawn, false, null);
 
                                     if (bufferObject)
                                     {
@@ -188,11 +194,10 @@ namespace DDS
                                     break;
 
                                 case PositioningOptions.Points:
-                                    if (!Do_Spawn_In_Frustum)
-                                     bufferObject = SpawningFunctions.SpawnPriorityObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Objects_To_Spawn, false, Frustum_Camera);
+                                    if (!Do_Spawn_In_Frustum) 
+                                        bufferObject = SpawningFunctions.SpawnPriorityObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Objects_To_Spawn, Frustum_Camera);
                                     else
-                                        bufferObject = SpawningFunctions.SpawnPriorityObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Objects_To_Spawn, false);
-                              //      bufferObject = SpawningFunctions.SpawnObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Object_To_Spawn, false);
+                                      bufferObject = SpawningFunctions.SpawnPriorityObjectAtSpawnPoint(Spawn_Positions[0].GetComponent<SpawnPosition>(), Objects_To_Spawn, null);
 
                                     if (bufferObject)
                                     {
@@ -219,11 +224,10 @@ namespace DDS
                             switch (Selected_Spawn_Position_Option)
                             {
                                 case PositioningOptions.Area:
-                                    if (!Do_Spawn_In_Frustum)
-                                        ReturnedObjects = SpawningFunctions.SpawnWaveInArea(Spawn_Area.GetComponent<SpawnArea>(), Object_To_Spawn, Wave_Spawn_Amount, false, Frustum_Camera);
+                                    if (!Do_Spawn_In_Frustum) 
+                                        ReturnedObjects = SpawningFunctions.SpawnWaveInArea(Spawn_Area.GetComponent<SpawnArea>(), Objects_To_Spawn, Wave_Spawn_Amount, Frustum_Camera);
                                     else
-                                        ReturnedObjects = SpawningFunctions.SpawnWaveInArea(Spawn_Area.GetComponent<SpawnArea>(), Object_To_Spawn, Wave_Spawn_Amount, false);
-
+                                        ReturnedObjects = SpawningFunctions.SpawnWaveInArea(Spawn_Area.GetComponent<SpawnArea>(), Objects_To_Spawn, Wave_Spawn_Amount, null);
                                     break;
                             }
 
@@ -240,6 +244,7 @@ namespace DDS
                         break;
                 }
             }
+            
         }
 
         void UpdateDistance()
