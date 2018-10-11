@@ -35,6 +35,10 @@ namespace DDS
             }
         }
 
+        /// <summary>
+        /// Set FrustumCamera to null if you don't want the Frustum Check.
+        /// Returns false if it couldn't allocate the desired amount of positions.
+        /// </summary>
         public bool GetCheckedSpawnPosition(SpawnAbleObject Object, Camera FrustumCamera, out Vector3 ReturnedPosition)
         {
             ReturnedPosition = new Vector3();

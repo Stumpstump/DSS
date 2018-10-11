@@ -459,7 +459,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1111403210}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67d0031e0ff739e4abc4dc71b5c3ce30, type: 3}
+  m_Script: {fileID: 11500000, guid: 2ce000ece64d9c844b2d137a6a70fc7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   UseYAxis: 0
@@ -585,6 +585,7 @@ GameObject:
   - component: {fileID: 1421375949}
   - component: {fileID: 1421375948}
   - component: {fileID: 1421375947}
+  - component: {fileID: 1421375951}
   m_Layer: 0
   m_Name: SpawnArea
   m_TagString: Untagged
@@ -604,9 +605,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7ce08bc48bc70044b972ed83e4552f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IgnoredRoofObjects:
-    serializedVersion: 2
-    m_Bits: 0
 --- !u!64 &1421375948
 MeshCollider:
   m_ObjectHideFlags: 2
@@ -643,6 +641,21 @@ Transform:
   m_Father: {fileID: 375994096471272594}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1421375951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1421375946}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81ec93c7b24a45e42a67b851dac7c1a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IgnoredRoofObjects:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1001 &1451165862
 PrefabInstance:
   m_ObjectHideFlags: 0

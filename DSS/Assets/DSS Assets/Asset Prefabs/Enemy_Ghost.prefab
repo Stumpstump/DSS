@@ -105,6 +105,7 @@ GameObject:
   - component: {fileID: 7368568869301895242}
   - component: {fileID: 7368568869301895243}
   - component: {fileID: 7368568869301895236}
+  - component: {fileID: 7092733702085203151}
   m_Layer: 0
   m_Name: Enemy_Ghost
   m_TagString: Untagged
@@ -223,6 +224,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 0}
   agent: {fileID: 7368568869301895243}
+--- !u!114 &7092733702085203151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7368568869301895237}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 812ea3045023e16449e4a38ae7b14b5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7838431250402240880
 GameObject:
   m_ObjectHideFlags: 0

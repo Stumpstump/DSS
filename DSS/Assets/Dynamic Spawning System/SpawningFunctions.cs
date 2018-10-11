@@ -19,10 +19,12 @@ namespace DDS
 
         public static GameObject SpawnPriorityObjectInArea(SpawnArea Area, SpawnAbleObject[] Objects, bool UseAreaHeight, Camera FrustumCamera)
         {
-            int IndexOfObject = GetHighestSpawnPriority(Objects);
+            int IndexOfObject = 0;
+            if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
+                return null;
 
             Vector3[] Position;
-            if (!Area.GetRandomCheckedPosition(Objects[IndexOfObject], 1, FrustumCamera, out Position))
+            if (!Area.GetRandomCheckedPositions(Objects[IndexOfObject], 1, FrustumCamera, out Position))
                 return null;
 
             return GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Position[0], Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
@@ -30,7 +32,9 @@ namespace DDS
 
         public static GameObject SpawnPriorityObjectAtSpawnPoint(SpawnPosition Point, SpawnAbleObject[] Objects, Camera FrustumCamera)
         {
-            int IndexOfObject = GetHighestSpawnPriority(Objects);
+            int IndexOfObject = 0;
+            if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
+                return null;
 
             Vector3 SpawnPosition;
             if (!Point.GetCheckedSpawnPosition(Objects[IndexOfObject], FrustumCamera, out SpawnPosition))
@@ -43,11 +47,13 @@ namespace DDS
 
         public static GameObject[] SpawnWaveInArea(SpawnArea Area, SpawnAbleObject[] Objects, int ObjectAmount, Camera FrustumCamera)
         {
-            int IndexOfObject = GetHighestSpawnPriority(Objects);
+            int IndexOfObject = 0;
+            if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
+                return null;
 
             Vector3[] Positions;
 
-            if (!Area.GetRandomCheckedPosition(Objects[IndexOfObject], ObjectAmount, FrustumCamera, out Positions))
+            if (!Area.GetRandomCheckedPositions(Objects[IndexOfObject], ObjectAmount, FrustumCamera, out Positions))
                 return null;
 
             GameObject[] ObjectsToReturn = new GameObject[ObjectAmount];
@@ -368,20 +374,33 @@ namespace DDS
         }
 
         //Returns the index number of the highest priority
-        public static int GetHighestSpawnPriority(SpawnAbleObject[] Objects)
+        public static bool GetHighestSpawnPriority(SpawnAbleObject[] Objects, out int ObjectIndex)
         {
-            float[] SpawnRangeMin = new float[Objects.Length];
-            float[] SpawnRangeMax = new float[Objects.Length];
+            List<SpawnAbleObject> SpawnableObjects = new List<SpawnAbleObject>();
+
+            ObjectIndex = 0;
+
+            for(int i = 0; i < Objects.Length; i++)
+            {
+                if (Objects[i].ObjectToSpawn.GetComponent<PersonalLogicScript>() == null)                
+                    SpawnableObjects.Add(Objects[i]);
+                
+                else if (Objects[i].ObjectToSpawn.GetComponent<PersonalLogicScript>().DoSpawn)
+                    SpawnableObjects.Add(Objects[i]);             
+            }
+
+            float[] SpawnRangeMin = new float[SpawnableObjects.Count];
+            float[] SpawnRangeMax = new float[SpawnableObjects.Count];
 
 
             float CollectiveWeight = 0;
 
-            foreach (SpawnAbleObject SpawnableObject in Objects)
+            foreach (SpawnAbleObject SpawnableObject in SpawnableObjects)
             {
                 CollectiveWeight += SpawnableObject.ChanceToSpawn;
             }
 
-            for(int index= 0; index < Objects.Length; index++)
+            for(int index= 0; index < SpawnableObjects.Count; index++)
             {
                 float SpawnMin = 0;
                 float SpawnMax = 0;
@@ -389,7 +408,7 @@ namespace DDS
                 if(index != 0)                
                     SpawnMin = SpawnRangeMax[index - 1];
 
-                SpawnMax = SpawnMin + (Objects[index].ChanceToSpawn / CollectiveWeight * 100);
+                SpawnMax = SpawnMin + (SpawnableObjects[index].ChanceToSpawn / CollectiveWeight * 100);
 
                 SpawnRangeMin[index] = SpawnMin;
                 SpawnRangeMax[index] = SpawnMax;
@@ -402,12 +421,13 @@ namespace DDS
             {
                 if(RandomNumber >= SpawnRangeMin[index] && RandomNumber <= SpawnRangeMax[index])
                 {
-                    return index;
+                    ObjectIndex = index;
+                    return true;
                 }
             }
 
-            Debug.Log("<color=blue> Highest Priority not in range </color>");
-            return 0;
+            
+            return false;
         }
     }
 }
