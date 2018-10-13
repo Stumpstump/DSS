@@ -17,15 +17,19 @@ namespace DDS
         public List<int> TestList;
 
         [SerializeField]
+        public bool Trigger_Spawn;
+
+        [SerializeField]
         public bool ShowIgnoredObjects;
 
         [SerializeField]
         public bool Do_Show_Point_Positions;
 
         [SerializeField]
-        public bool Spawn_Wave_Trigger = false;
+        public bool Spawn_Wave_Trigger;
 
-
+        [SerializeField]
+        public bool Trigger_Spawn_Overrides_Logic;
    
         [SerializeField]
         public int Wave_Spawn_Amount;
@@ -156,7 +160,8 @@ namespace DDS
         {
             ///Test Mode
 
-
+            SpawningFunctions.Trigger_Spawn_Overrides_Logic = Trigger_Spawn_Overrides_Logic;
+            SpawningFunctions.IsTriggerSpawn = Trigger_Spawn;
             
             SpawningFunctions.UseOcclusionCulling = UseOcclusionCulling;
             this.InitializeObjectstoCheck();
@@ -164,19 +169,19 @@ namespace DDS
 
             SpawnInterval += Time.deltaTime;
 
-            if (Is_Not_In_Range && Do_Spawn_If_Not_In_Range || !Do_Spawn_If_Not_In_Range)
+            if (Is_Not_In_Range && Do_Spawn_If_Not_In_Range || !Do_Spawn_If_Not_In_Range || Trigger_Spawn_Overrides_Logic && Trigger_Spawn)
             {
                 switch (Selected_Spawning_Style)
                 {
                     case SpawningStyles.Continuous:
-                        if (SpawnInterval > Spawn_Delay)
+                        if (SpawnInterval > Spawn_Delay || Trigger_Spawn)
                         {
+                            
                             if (Do_Limit_Objects_Alive)
-                                if (Spawned_Objects.Count >= Maximal_Spawned_Objects_Alive)
-                                    return;
+                                if (Spawned_Objects.Count >= Maximal_Spawned_Objects_Alive && !(Trigger_Spawn_Overrides_Logic && Trigger_Spawn))
+                                   return;
 
                             GameObject bufferObject = null;
-
                             switch (Selected_Spawn_Position_Option)
                             {
                                 case PositioningOptions.Area:
@@ -188,9 +193,11 @@ namespace DDS
 
                                     if (bufferObject)
                                     {
+                                        Trigger_Spawn = false;
                                         Spawned_Objects.Add(bufferObject);
                                         SpawnInterval = 0f;
                                     }
+
                                     break;
 
                                 case PositioningOptions.Points:
@@ -201,6 +208,7 @@ namespace DDS
 
                                     if (bufferObject)
                                     {
+                                        Trigger_Spawn = false;
                                         Spawned_Objects.Add(bufferObject);
                                         SpawnInterval = 0f;
                                     }
@@ -213,9 +221,9 @@ namespace DDS
 
                     case SpawningStyles.Wave:
 
-                        if (Spawn_Wave_Trigger || Do_Spawn_Continuous_Waves)
+                        if (Spawn_Wave_Trigger || Do_Spawn_Continuous_Waves || Trigger_Spawn_Overrides_Logic && Trigger_Spawn)
                         {
-                            if (Do_Spawn_Continuous_Waves)
+                            if (Do_Spawn_Continuous_Waves && (!Trigger_Spawn_Overrides_Logic && Trigger_Spawn))
                                 if (Spawned_Objects.Count > 0)
                                     return;
 
@@ -233,6 +241,7 @@ namespace DDS
 
                             if (ReturnedObjects != null)
                             {
+                                Trigger_Spawn = false;
                                 Spawn_Wave_Trigger = false;
 
                                 foreach (GameObject ToAddObject in ReturnedObjects)
@@ -390,6 +399,7 @@ namespace DDS
         SerializedProperty FrustumCamera;
         SerializedProperty UseOcclusionCulling;
         SerializedProperty ObjectsToSpawn;
+        SerializedProperty TriggerSpawnOverridesLogic;
 
         GUILayoutOption StandardLayout = GUILayout.Height(15);
 
@@ -412,8 +422,8 @@ namespace DDS
                 DynamicSpawned.Objects_To_Spawn = new SpawnAbleObject[0];
             }
 
-  
 
+            TriggerSpawnOverridesLogic = this.serializedObject.FindProperty("Trigger_Spawn_Overrides_Logic");
             ObjectsToSpawn = this.serializedObject.FindProperty("Objects_To_Spawn");
             UseOcclusionCulling = this.serializedObject.FindProperty("UseOcclusionCulling");
             ShowPointPositions = this.serializedObject.FindProperty("Do_Show_Point_Positions");
@@ -449,8 +459,10 @@ namespace DDS
             this.serializedObject.Update();
 
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(IsNotInRange, new GUIContent("In range:"), StandardLayout);
+            EditorGUILayout.PropertyField(TriggerSpawnOverridesLogic, new GUIContent("Trigger spawn overrides logic:"), StandardLayout);
             EditorGUI.EndChangeCheck();
+
+            SpawningFunctions.Trigger_Spawn_Overrides_Logic = TriggerSpawnOverridesLogic.boolValue;
 
             //Test start
 

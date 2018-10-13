@@ -41,6 +41,15 @@ namespace DDS
         /// </summary>
         public bool GetCheckedSpawnPosition(SpawnAbleObject Object, Camera FrustumCamera, out Vector3 ReturnedPosition)
         {
+            PersonalLogicScript PersonalScript = Object.ObjectToSpawn.GetComponent<PersonalLogicScript>();
+
+            bool UsePersonalLogic = false;
+
+            if (PersonalScript != null)
+            {
+                UsePersonalLogic = true;
+            }
+
             ReturnedPosition = new Vector3();
 
             ReturnedPosition.x = transform.position.x;
@@ -60,60 +69,92 @@ namespace DDS
 
             CenterOffset = ObjectBounds.center - Object.ObjectToSpawn.transform.position;
 
-            RaycastHit Hit = new RaycastHit();
-
-            if (!Physics.BoxCast(new Vector3(transform.position.x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2 + Object.AdaptableSpawnHeight, transform.position.z) + CenterOffset, ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, 100 + Object.AdaptableSpawnHeight, ~Layer))
+            if(!UsePersonalLogic)
             {
-                Debug.Log("<color=red> No ground detected, please readjust your Spawn Point height </color>");
-                return false;
-            }
+                RaycastHit Hit = new RaycastHit();
 
-            float Distance = 0;  
-
-            if (Hit.point.y + ObjectBounds.size.y / 2 < transform.position.y)
-            {
-                Debug.Log("AMde");
-                   
-                Distance = Hit.point.y + ObjectBounds.size.y / 2 - transform.position.y + ObjectBounds.size.y / 2;
-
-                if (Distance < 0)
-                    Distance *= -1;
-            }
-
-
-
-
-            Collider[] OverlapingColliders = Physics.OverlapBox(new Vector3(transform.position.x, Hit.point.y + ObjectBounds.size.y / 2, transform.position.z) + CenterOffset, ObjectBounds.extents);
-
-            List<Collider> OverlappingColliderList = new List<Collider>(OverlapingColliders);
-
-            bool DoDeletePosition = false;
-
-            for (int a = 0; a < OverlappingColliderList.Count; a++)
-            {
-                if (OverlappingColliderList[a].gameObject != transform.gameObject && OverlappingColliderList[a].gameObject != Hit.transform.gameObject)
+                if (!Physics.BoxCast(new Vector3(transform.position.x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2 + Object.AdaptableSpawnHeight, transform.position.z) + CenterOffset, ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, 100 + Object.AdaptableSpawnHeight, ~Layer))
                 {
-                    DoDeletePosition = true;
+                    Debug.Log("<color=red> No ground detected, please readjust your Spawn Point height </color>");
+                    return false;
+                }
+
+                float Distance = 0;
+
+                if (Hit.point.y + ObjectBounds.size.y / 2 < transform.position.y)
+                {
+                    Distance = Hit.point.y + ObjectBounds.size.y / 2 - transform.position.y + ObjectBounds.size.y / 2;
+
+                    if (Distance < 0)
+                        Distance *= -1;
+                }
+
+
+
+
+                Collider[] OverlapingColliders = Physics.OverlapBox(new Vector3(transform.position.x, Hit.point.y + ObjectBounds.size.y / 2, transform.position.z) + CenterOffset, ObjectBounds.extents);
+
+                List<Collider> OverlappingColliderList = new List<Collider>(OverlapingColliders);
+
+                bool DoDeletePosition = false;
+
+                for (int a = 0; a < OverlappingColliderList.Count; a++)
+                {
+                    if (OverlappingColliderList[a].gameObject != transform.gameObject && OverlappingColliderList[a].gameObject != Hit.transform.gameObject)
+                    {
+                        DoDeletePosition = true;
+                    }
+
+                }
+
+                if (Distance < Object.AdaptableSpawnHeight && !DoDeletePosition)
+                {
+                    ReturnedPosition.y = Hit.point.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2;
+                }
+
+                else
+                    return false;
+
+                if (FrustumCamera != null)
+                {
+                    if (SpawningFunctions.IsVisible(FrustumCamera, Object.ObjectToSpawn, ReturnedPosition))
+                        return false;
+
+                    else if (Object.ApplyLogicToChilds)
+                        if (SpawningFunctions.IsAnyChildVisible(Object.ObjectToSpawn, ReturnedPosition, FrustumCamera))
+                            return false;
                 }
 
             }
 
-            if (Distance < Object.AdaptableSpawnHeight && !DoDeletePosition)
-            {
-                ReturnedPosition.y = Hit.point.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2;
-            }
-
             else
-                return false;
-
-            if(FrustumCamera != null)
             {
-                if (SpawningFunctions.IsVisible(FrustumCamera, Object.ObjectToSpawn, ReturnedPosition))
-                    return false;
+                RaycastHit Hit = new RaycastHit();
 
-                else if(Object.ApplyLogicToChilds)                
-                    if (SpawningFunctions.IsAnyChildVisible(Object.ObjectToSpawn, ReturnedPosition, FrustumCamera))
-                        return false;           
+                if (!Physics.BoxCast(new Vector3(transform.position.x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2 + Object.AdaptableSpawnHeight, transform.position.z) + CenterOffset, ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, 100 + Object.AdaptableSpawnHeight, ~Layer))
+                {
+                    Debug.Log("<color=red> No ground detected, please readjust your Spawn Point height </color>");
+                    return false;
+                }
+
+                float Distance = 0;
+
+                if (Hit.point.y + ObjectBounds.size.y / 2 < transform.position.y)
+                {
+                    Distance = Hit.point.y + ObjectBounds.size.y / 2 - transform.position.y + ObjectBounds.size.y / 2;
+
+                    if (Distance < 0)
+                        Distance *= -1;
+                }
+
+
+                if (Distance < Object.AdaptableSpawnHeight)
+                {
+                    ReturnedPosition.y = Hit.point.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2;
+                }
+
+                else
+                    return false;
             }
 
             return true;

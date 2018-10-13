@@ -12,7 +12,9 @@ namespace DDS
 {
     public static class SpawningFunctions 
     {
+        static public bool Trigger_Spawn_Overrides_Logic;
         static public bool UseOcclusionCulling;
+        static public bool IsTriggerSpawn = false;
         static private int MaxPositionChecks = 50;
         static public List<GameObject> FrustumIgnoredObjects;
 
@@ -22,7 +24,7 @@ namespace DDS
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
                 return null;
-
+            Debug.Log("sadasdasd");
             Vector3[] Position;
             if (!Area.GetRandomCheckedPositions(Objects[IndexOfObject], 1, FrustumCamera, out Position))
                 return null;
@@ -425,7 +427,7 @@ namespace DDS
                     return true;
                 }
             }
-
+            Debug.Log("Returned false : " + CollectiveWeight);
             
             return false;
         }
