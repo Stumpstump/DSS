@@ -14,5 +14,9 @@ public class test : MonoBehaviour
             TriggerASpawn = false;
             GameObject.FindGameObjectWithTag("Fire").GetComponent<DDS.Spawner>().Trigger_Spawn = true;
         }
+
+        Debug.Log("Renderer Center: " + GetComponent<Renderer>().bounds.center);
+        Debug.Log("Object Center: " + transform.position);
+
     }
 }

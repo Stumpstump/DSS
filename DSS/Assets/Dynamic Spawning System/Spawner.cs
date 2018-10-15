@@ -151,8 +151,6 @@ namespace DDS
         void Start()
         {
 
-            TestPosition = GameObject.Find("Test").transform.position;
-
             this.InitializeObjectstoCheck();
         }
 

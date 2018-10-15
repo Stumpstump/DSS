@@ -41,14 +41,14 @@ namespace DDS
         /// </summary>
         public bool GetCheckedSpawnPosition(SpawnAbleObject Object, Camera FrustumCamera, out Vector3 ReturnedPosition)
         {
-            PersonalLogicScript PersonalScript = Object.ObjectToSpawn.GetComponent<PersonalLogicScript>();
-
-            bool UsePersonalLogic = false;
-
-            if (PersonalScript != null)
-            {
-                UsePersonalLogic = true;
-            }
+//             PersonalLogicScript PersonalScript = Object.ObjectToSpawn.GetComponent<PersonalLogicScript>();
+// 
+//             bool UsePersonalLogic = false;
+// 
+//             if (PersonalScript != null)
+//             {
+//                 UsePersonalLogic = true;
+//             }
 
             ReturnedPosition = new Vector3();
 
@@ -69,8 +69,8 @@ namespace DDS
 
             CenterOffset = ObjectBounds.center - Object.ObjectToSpawn.transform.position;
 
-            if(!UsePersonalLogic)
-            {
+//             if(!UsePersonalLogic)
+//             {
                 RaycastHit Hit = new RaycastHit();
 
                 if (!Physics.BoxCast(new Vector3(transform.position.x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2 + Object.AdaptableSpawnHeight, transform.position.z) + CenterOffset, ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, 100 + Object.AdaptableSpawnHeight, ~Layer))
@@ -125,37 +125,37 @@ namespace DDS
                             return false;
                 }
 
-            }
+         //   }
 
-            else
-            {
-                RaycastHit Hit = new RaycastHit();
-
-                if (!Physics.BoxCast(new Vector3(transform.position.x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2 + Object.AdaptableSpawnHeight, transform.position.z) + CenterOffset, ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, 100 + Object.AdaptableSpawnHeight, ~Layer))
-                {
-                    Debug.Log("<color=red> No ground detected, please readjust your Spawn Point height </color>");
-                    return false;
-                }
-
-                float Distance = 0;
-
-                if (Hit.point.y + ObjectBounds.size.y / 2 < transform.position.y)
-                {
-                    Distance = Hit.point.y + ObjectBounds.size.y / 2 - transform.position.y + ObjectBounds.size.y / 2;
-
-                    if (Distance < 0)
-                        Distance *= -1;
-                }
-
-
-                if (Distance < Object.AdaptableSpawnHeight)
-                {
-                    ReturnedPosition.y = Hit.point.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2;
-                }
-
-                else
-                    return false;
-            }
+//             else
+//             {
+//                 RaycastHit Hit = new RaycastHit();
+// 
+//                 if (!Physics.BoxCast(new Vector3(transform.position.x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2 + Object.AdaptableSpawnHeight, transform.position.z) + CenterOffset, ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, 100 + Object.AdaptableSpawnHeight, ~Layer))
+//                 {
+//                     Debug.Log("<color=red> No ground detected, please readjust your Spawn Point height </color>");
+//                     return false;
+//                 }
+// 
+//                 float Distance = 0;
+// 
+//                 if (Hit.point.y + ObjectBounds.size.y / 2 < transform.position.y)
+//                 {
+//                     Distance = Hit.point.y + ObjectBounds.size.y / 2 - transform.position.y + ObjectBounds.size.y / 2;
+// 
+//                     if (Distance < 0)
+//                         Distance *= -1;
+//                 }
+// 
+// 
+//                 if (Distance < Object.AdaptableSpawnHeight)
+//                 {
+//                     ReturnedPosition.y = Hit.point.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2;
+//                 }
+// 
+//                 else
+//                     return false;
+//             }
 
             return true;
         }

@@ -10,8 +10,14 @@ using System.Collections;
 
 namespace DDS
 {
-    public static class SpawningFunctions 
+
+    public static class SpawningFunctions
     {
+        delegate void WriteToConsole(string Text);
+
+        static WriteToConsole WriteError = delegate (string Text) { Debug.Log(Text); };
+
+
         static public bool Trigger_Spawn_Overrides_Logic;
         static public bool UseOcclusionCulling;
         static public bool IsTriggerSpawn = false;
@@ -24,7 +30,6 @@ namespace DDS
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
                 return null;
-            Debug.Log("sadasdasd");
             Vector3[] Position;
             if (!Area.GetRandomCheckedPositions(Objects[IndexOfObject], 1, FrustumCamera, out Position))
                 return null;
