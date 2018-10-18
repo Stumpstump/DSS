@@ -6,6 +6,9 @@ namespace DDS
     [System.Serializable]
     public struct SpawnAbleObject
     {
+        [HideInInspector]
+        public string ObjectName;
+
         public GameObject ObjectToSpawn;
         public bool ApplyLogicToChilds;
         public float ChanceToSpawn;

@@ -148,8 +148,6 @@ namespace DDS
 
            // if (!UsePersonalLogic && (SpawningFunctions.IsTriggerSpawn && SpawningFunctions.Trigger_Spawn_Overrides_Logic))
          //   {
-                Debug.Log(SpawningFunctions.IsTriggerSpawn);
-                Debug.Log(SpawningFunctions.Trigger_Spawn_Overrides_Logic);
                 for (int i = 0; i < Positions.Length; i++)
                 {
                     RaycastHit Hit;

@@ -17,7 +17,7 @@ namespace DDS
 
         static WriteToConsole WriteError = delegate (string Text) { Debug.Log(Text); };
 
-
+        static public int WaveSpawnAmount;
         static public bool Trigger_Spawn_Overrides_Logic;
         static public bool UseOcclusionCulling;
         static public bool IsTriggerSpawn = false;
@@ -25,8 +25,10 @@ namespace DDS
         static public List<GameObject> FrustumIgnoredObjects;
 
 
-        public static GameObject SpawnPriorityObjectInArea(SpawnArea Area, SpawnAbleObject[] Objects, bool UseAreaHeight, Camera FrustumCamera)
+        public static GameObject[] SpawnPriorityObjectInArea(Component AreaComponent, SpawnAbleObject[] Objects, Camera FrustumCamera)
         {
+            SpawnArea Area = (SpawnArea)AreaComponent;
+
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
                 return null;
@@ -34,38 +36,49 @@ namespace DDS
             if (!Area.GetRandomCheckedPositions(Objects[IndexOfObject], 1, FrustumCamera, out Position))
                 return null;
 
-            return GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Position[0], Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
+
+            GameObject[] ReturnArray = new GameObject[1];
+
+            ReturnArray[0] = GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Position[0], Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
+
+            return ReturnArray;
         }
 
-        public static GameObject SpawnPriorityObjectAtSpawnPoint(SpawnPosition Point, SpawnAbleObject[] Objects, Camera FrustumCamera)
+        public static GameObject[] SpawnPriorityObjectAtSpawnPoint(Component SpawnPointComponent, SpawnAbleObject[] Objects, Camera FrustumCamera)
         {
+            SpawnPosition Point = (SpawnPosition)SpawnPointComponent;
+
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
                 return null;
 
-            Vector3 SpawnPosition;
-            if (!Point.GetCheckedSpawnPosition(Objects[IndexOfObject], FrustumCamera, out SpawnPosition))
+            Vector3 Position;
+            if (!Point.GetCheckedSpawnPosition(Objects[IndexOfObject], FrustumCamera, out Position))
                 return null;
 
-            
+            GameObject[] ReturnArray = new GameObject[1];
 
-            return GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, SpawnPosition, Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
+            ReturnArray[0] = GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Position, Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
+
+            return ReturnArray;
         }
 
-        public static GameObject[] SpawnWaveInArea(SpawnArea Area, SpawnAbleObject[] Objects, int ObjectAmount, Camera FrustumCamera)
+        public static GameObject[] SpawnWaveInArea(Component AreaComponent, SpawnAbleObject[] Objects,  Camera FrustumCamera)
         {
+            SpawnArea Area = (SpawnArea)AreaComponent;
+
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
                 return null;
 
             Vector3[] Positions;
 
-            if (!Area.GetRandomCheckedPositions(Objects[IndexOfObject], ObjectAmount, FrustumCamera, out Positions))
+            if (!Area.GetRandomCheckedPositions(Objects[IndexOfObject], WaveSpawnAmount, FrustumCamera, out Positions))
                 return null;
 
-            GameObject[] ObjectsToReturn = new GameObject[ObjectAmount];
+            GameObject[] ObjectsToReturn = new GameObject[WaveSpawnAmount];
 
-            for(int i = 0; i < ObjectAmount; i++)
+            for(int i = 0; i < WaveSpawnAmount; i++)
             {
                 ObjectsToReturn[i] = GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Positions[i], Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
             }
@@ -384,6 +397,7 @@ namespace DDS
         public static bool GetHighestSpawnPriority(SpawnAbleObject[] Objects, out int ObjectIndex)
         {
             List<SpawnAbleObject> SpawnableObjects = new List<SpawnAbleObject>();
+                       
 
             ObjectIndex = 0;
 
@@ -432,7 +446,6 @@ namespace DDS
                     return true;
                 }
             }
-            Debug.Log("Returned false : " + CollectiveWeight);
             
             return false;
         }
