@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7153826912936316375}
   m_Layer: 0
   m_Name: SpawnPosition
-  m_TagString: Untagged
+  m_TagString: SpawnPoint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -43,4 +43,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ce000ece64d9c844b2d137a6a70fc7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Objects_to_Spawn: []
   UseYAxis: 0

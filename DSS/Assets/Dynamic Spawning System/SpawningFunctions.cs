@@ -10,7 +10,6 @@ using System.Collections;
 
 namespace DDS
 {
-
     public static class SpawningFunctions
     {
         delegate void WriteToConsole(string Text);
@@ -21,17 +20,24 @@ namespace DDS
         static public bool Trigger_Spawn_Overrides_Logic;
         static public bool UseOcclusionCulling;
         static public bool IsTriggerSpawn = false;
-        static private int MaxPositionChecks = 50;
         static public List<GameObject> FrustumIgnoredObjects;
 
 
-        public static GameObject[] SpawnPriorityObjectInArea(Component AreaComponent, SpawnAbleObject[] Objects, Camera FrustumCamera)
+        public static GameObject[] SpawnPriorityObjectInArea(Component AreaComponent, Camera FrustumCamera)
         {
             SpawnArea Area = (SpawnArea)AreaComponent;
+
+            SpawnAbleObject[] Objects = Area.Objects_to_Spawn;
+
 
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
                 return null;
+
+            if (Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>())
+                if (!Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>().DoSpawn)
+                    return null;
+
             Vector3[] Position;
             if (!Area.GetRandomCheckedPositions(Objects[IndexOfObject], 1, FrustumCamera, out Position))
                 return null;
@@ -44,13 +50,19 @@ namespace DDS
             return ReturnArray;
         }
 
-        public static GameObject[] SpawnPriorityObjectAtSpawnPoint(Component SpawnPointComponent, SpawnAbleObject[] Objects, Camera FrustumCamera)
+        public static GameObject[] SpawnPriorityObjectAtSpawnPoint(Component SpawnPointComponent, Camera FrustumCamera)
         {
             SpawnPosition Point = (SpawnPosition)SpawnPointComponent;
+
+            SpawnAbleObject[] Objects = Point.Objects_to_Spawn;
 
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
                 return null;
+
+            if (Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>())
+                if (!Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>().DoSpawn)
+                    return null;
 
             Vector3 Position;
             if (!Point.GetCheckedSpawnPosition(Objects[IndexOfObject], FrustumCamera, out Position))
@@ -63,13 +75,19 @@ namespace DDS
             return ReturnArray;
         }
 
-        public static GameObject[] SpawnWaveInArea(Component AreaComponent, SpawnAbleObject[] Objects,  Camera FrustumCamera)
+        public static GameObject[] SpawnWaveInArea(Component AreaComponent, Camera FrustumCamera)
         {
             SpawnArea Area = (SpawnArea)AreaComponent;
+
+            SpawnAbleObject[] Objects = Area.Objects_to_Spawn;
 
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
                 return null;
+
+            if (Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>())
+                if (!Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>().DoSpawn)
+                    return null;
 
             Vector3[] Positions;
 

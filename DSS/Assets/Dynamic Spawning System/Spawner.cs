@@ -7,7 +7,7 @@ namespace DDS
 {
     public class Spawner : MonoBehaviour
     {
-        delegate GameObject[] SpawningFunction(Component PositioningComponent, SpawnAbleObject[] ObjectsToSpawn, Camera FrustumCamera);
+        delegate GameObject[] SpawningFunction(Component PositioningComponent, Camera FrustumCamera);
 
         SpawningFunction SelectedSpawningFunction;
 
@@ -113,7 +113,7 @@ namespace DDS
         /// List of the Spawn positions
         /// </summary>
         [SerializeField]
-        public List<GameObject> Spawn_Positions;
+        public List<Component> Spawn_Positions;
 
         /// <summary>
         /// The Player Object to check the Is_In_Range variable
@@ -159,11 +159,9 @@ namespace DDS
         [SerializeField]
         float SpawnInterval;
 
-        bool DoTest = true;
-
         void Awake()
         {
-
+            this.InitializeSpawnPositions();
         }
 
         void Start()
@@ -205,7 +203,7 @@ namespace DDS
 
                     else
                     {
-                        PositioningComponent = Spawn_Positions[0].GetComponent<SpawnPosition>();
+                        PositioningComponent = Spawn_Positions[2];
                         SelectedSpawningFunction = SpawningFunctions.SpawnPriorityObjectAtSpawnPoint;                                            
                     }
                     break;
@@ -220,7 +218,7 @@ namespace DDS
             {
                 Trigger_Spawn = false;
 
-                GameObject[] SpawnedObjects = SelectedSpawningFunction(PositioningComponent, Objects_To_Spawn, FrustumCamera);
+                GameObject[] SpawnedObjects = SelectedSpawningFunction(PositioningComponent, FrustumCamera);
 
                 if(SpawnedObjects != null)
                 {
@@ -308,6 +306,16 @@ namespace DDS
                     string Tag = UnityEditorInternal.InternalEditorUtility.tags[Player_Identification_Data.Tag];
                     Player = GameObject.FindWithTag(Tag);
                     break;
+            }
+        }
+
+        public void InitializeSpawnPositions()
+        {
+            Spawn_Positions = new List<Component>();
+
+            foreach (var Child in transform.GetComponentsInChildren<SpawnPosition>())
+            {
+                Spawn_Positions.Add(Child);
             }
         }
 
@@ -467,25 +475,25 @@ namespace DDS
             SpawningFunctions.Trigger_Spawn_Overrides_Logic = TriggerSpawnOverridesLogic.boolValue;
                  
             EditorGUI.BeginChangeCheck();
-
-            EditorGUILayout.PropertyField(ObjectsToSpawn, new GUIContent("Objects to Spawn: "), true);
-
-            SerializedProperty ObjectSize = ObjectsToSpawn.FindPropertyRelative("Array.size");
-
-            if (ObjectSize.intValue > 20)
-                ObjectSize.intValue = 20;
-
-            for (int i = 0; i < ObjectSize.intValue; i++)
-            {
-                string Name = "Empty";
-                if (ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue != null)
-                    ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectName").stringValue = ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue.name;
-
-                else
-                {
-                    ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectName").stringValue = Name;
-                }
-            }
+// 
+// //             EditorGUILayout.PropertyField(ObjectsToSpawn, new GUIContent("Objects to Spawn: "), true);
+// 
+//             SerializedProperty ObjectSize = ObjectsToSpawn.FindPropertyRelative("Array.size");
+// 
+//             if (ObjectSize.intValue > 20)
+//                 ObjectSize.intValue = 20;
+// 
+// //             for (int i = 0; i < ObjectSize.intValue; i++)
+// //             {
+// //                 string Name = "Empty";
+// //                 if (ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue != null)
+// //                     ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectName").stringValue = ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue.name;
+// // 
+// //                 else
+// //                 {
+// //                     ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectName").stringValue = Name;
+// //                 }
+// //             }
 
             EditorGUILayout.PropertyField(SelectedSpawningStyle, new GUIContent("Spawn Style: "), StandardLayout);
 
@@ -632,7 +640,6 @@ namespace DDS
                             DynamicSpawned.Spawn_Area.transform.localPosition = new Vector3(0, 0, 0);
                             DynamicSpawned.Spawn_Area.GetComponent<MeshCollider>().hideFlags = HideFlags.HideInInspector;
                             DynamicSpawned.Spawn_Area.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
-                            DynamicSpawned.Spawn_Area.GetComponent<SpawnArea>().hideFlags = HideFlags.HideInInspector;
                         }
 
                         break;
@@ -640,32 +647,6 @@ namespace DDS
 
                 case PositioningOptions.Points:
                     {
-                        if (DynamicSpawned.Spawn_Area)
-                            DestroyImmediate(DynamicSpawned.Spawn_Area);
-
-                        EditorGUILayout.PropertyField(ShowPointPositions, new GUIContent("Show Spawn Points: "), StandardLayout);
-
-                        if (ShowPointPositions.boolValue)
-                        {
-                            EditorGUI.indentLevel++;
-
-                            for (int i = 0; i < SpawnPositions.arraySize; i++)
-                            {
-                                EditorGUILayout.PropertyField(SpawnPositions.GetArrayElementAtIndex(i));
-                            }
-
-                            if (GUILayout.Button("Create Spawn Point"))
-                            {
-                                GameObject bufferPosition = Instantiate(Resources.Load("SpawnPosition", typeof(GameObject))) as GameObject;
-                                bufferPosition.transform.SetParent(DynamicSpawned.transform);
-                                bufferPosition.transform.name = "New Spawn Position";
-                                bufferPosition.transform.localPosition = new Vector3(0, 0, 0);
-                                DynamicSpawned.Spawn_Positions.Add(bufferPosition);
-                            }
-
-                            EditorGUI.indentLevel--;
-                        }
-
                         break;
                     }
             }

@@ -67,6 +67,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81ec93c7b24a45e42a67b851dac7c1a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Objects_to_Spawn: []
   IgnoredRoofObjects:
     serializedVersion: 2
     m_Bits: 1024
