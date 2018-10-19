@@ -11,11 +11,15 @@ namespace DDS
 
         public bool UseYAxis;
 
-        private int Layer;        
+        [Tooltip("Assign all Objects the ground detection should ignore to this mask")]
+        public LayerMask IgnoredSpawnObject;
+
+        [Tooltip("Adjust this height to not collide with the roof of the room etc.")]
+        public float GroundDetectionHeight;
+
 
         void Start()
         {
-            Layer = 1 << LayerMask.NameToLayer("IgnoredSpawnAreaObjects");
         }
 
         public Vector3 GetSpawnPosition
@@ -71,7 +75,7 @@ namespace DDS
 
             RaycastHit Hit = new RaycastHit();
 
-            if (!Physics.BoxCast(new Vector3(transform.position.x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2 + Object.AdaptableSpawnHeight, transform.position.z) + CenterOffset, ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, 100 + Object.AdaptableSpawnHeight, ~Layer))
+            if (!Physics.BoxCast(new Vector3(transform.position.x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2 + GroundDetectionHeight, transform.position.z) + CenterOffset, ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, GroundDetectionHeight + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2, ~IgnoredSpawnObject))
             {
                 Debug.Log("<color=red> No ground detected, please readjust your Spawn Point height </color>");
                 return false;

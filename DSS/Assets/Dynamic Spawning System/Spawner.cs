@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System.IO;
 
 namespace DDS
 {
@@ -44,8 +45,6 @@ namespace DDS
 
         [SerializeField]
         public bool Trigger_Spawn_Overrides_Logic;
-   
-
 
         /// <summary>
         /// Maximum of Objects that can be alive at the same time
@@ -203,24 +202,23 @@ namespace DDS
 
                     else
                     {
-                        PositioningComponent = Spawn_Positions[2];
+                        PositioningComponent = Spawn_Positions[0];
                         SelectedSpawningFunction = SpawningFunctions.SpawnPriorityObjectAtSpawnPoint;                                            
                     }
                     break;
             }
+            
+                Camera FrustumCamera = null;
 
-            Camera FrustumCamera = null;
+                if (!Do_Spawn_In_Frustum)
+                    FrustumCamera = Frustum_Camera;
 
-            if (!Do_Spawn_In_Frustum)
-                FrustumCamera = Frustum_Camera;
-
-            if(IsSpawningAllowed())
+            if (IsSpawningAllowed())
             {
                 Trigger_Spawn = false;
 
                 GameObject[] SpawnedObjects = SelectedSpawningFunction(PositioningComponent, FrustumCamera);
-
-                if(SpawnedObjects != null)
+                if (SpawnedObjects != null)
                 {
                     if (SpawnedObjects.Length > 0)
                     {
@@ -232,7 +230,8 @@ namespace DDS
                         }
                     }
                 }
-            }              
+            }
+
         }
 
         bool IsSpawningAllowed()
@@ -414,10 +413,12 @@ namespace DDS
 
         GUILayoutOption StandardLayout = GUILayout.Height(15);
 
-        Spawner DynamicSpawned;
+        Spawner DynamicSpawned; 
         
         protected virtual void OnEnable()
         {
+            DynamicSpawned = target as Spawner;
+
             if (DynamicSpawned.IgnoredObjects == null)
             {
                 DynamicSpawned.IgnoredObjects = new List<GameObject>();
@@ -461,9 +462,29 @@ namespace DDS
             FrustumCamera = this.serializedObject.FindProperty("Frustum_Camera");
         }
 
+        [MenuItem("GameObject/Dynamic Spawning System/SpawnPoint", false, 0)]
+        static void AddSpawnPoint()
+        {
+            GameObject NewSpawnPoint = Instantiate(Resources.Load("SpawnPosition") as GameObject, Selection.activeTransform);
+
+            NewSpawnPoint.name = "New Spawn Point";           
+        }
+
+        [MenuItem("GameObject/Dynamic Spawning System/SpawnNode", false, 0)]
+        static void CreateSpawnNode()
+        {
+            GameObject NewSpawnNode = Instantiate(Resources.Load("Spawn Node") as GameObject);
+            NewSpawnNode.name = "New Spawn Node";
+        }
+
+        [MenuItem("GameObject/Spawner/Create a Spawn Area", false, 0)]
+        void AddSpawnArea()
+        {
+            
+        }
+
         public void Awake()
         {
-            DynamicSpawned = target as Spawner;
         }
 
         bool FoldOut;

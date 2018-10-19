@@ -9,14 +9,11 @@ namespace DDS
         [SerializeField]
         public SpawnAbleObject[] Objects_to_Spawn;
 
-        public LayerMask IgnoredRoofObjects;
+        [Tooltip("Assign all Objects the ground detection should ignore to this mask")]
+        public LayerMask IgnoredSpawnObject;
 
-        private int Layer;
-
-        void Start()
-        {
-            Layer = 1 << LayerMask.NameToLayer("IgnoredSpawnAreaObjects");
-        }
+        [Tooltip("Adjust this height to not collide with the roof of the room, etc.")]
+        public float GroundDetectionHeight;
 
         /// <summary>
         /// Returns a random Point in the Area of the boundings
@@ -152,7 +149,7 @@ namespace DDS
             {
                 RaycastHit Hit;
 
-                if (!Physics.BoxCast(new Vector3(Positions[i].x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2 + Object.AdaptableSpawnHeight, Positions[i].z), ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, 10 + Object.AdaptableSpawnHeight, ~Layer, QueryTriggerInteraction.Ignore))
+                if (!Physics.BoxCast(new Vector3(Positions[i].x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2  + GroundDetectionHeight, Positions[i].z), ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, GroundDetectionHeight + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2, ~IgnoredSpawnObject, QueryTriggerInteraction.Ignore))
                 {
                     Debug.Log("<color=red> No ground detected, please readjust your Spawn Area height </color>");
                     return false;

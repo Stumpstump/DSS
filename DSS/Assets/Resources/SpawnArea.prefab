@@ -9,10 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8152884181476706181}
-  - component: {fileID: 6615537761851001836}
   - component: {fileID: 7087375909874743095}
   - component: {fileID: 5383707899596728286}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: SpawnArea
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -33,14 +32,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &6615537761851001836
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5057786067587912236}
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!64 &7087375909874743095
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -68,6 +59,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Objects_to_Spawn: []
-  IgnoredRoofObjects:
+  IgnoredSpawnObject:
     serializedVersion: 2
-    m_Bits: 1024
+    m_Bits: 0
