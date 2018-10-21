@@ -13,262 +13,179 @@ namespace DDS
         SpawningFunction SelectedSpawningFunction;
 
         [SerializeField]
-        ContiniousWaveStatus Current_Continious_Wave_Status;
+        public ContiniousWaveStatus CurrentContiniousWaveStatus;
 
 
         [SerializeField]
-        int Wave_Spawn_Amount;
+        public int WaveSpawnAmount;
 
         [SerializeField]
-        bool FoldoutObjectsToSpawn;
+        public bool UseOcclusionCulling;
 
         [SerializeField]
-        bool UseOcclusionCulling;
+        public List<GameObject> IgnoredObjects = new List<GameObject>();
 
         [SerializeField]
-        public List<GameObject> IgnoredObjects;
-
-        [SerializeField]
-        public List<int> TestList;
-
-        [SerializeField]
-        public bool Trigger_Spawn;
+        public bool TriggerSpawn;
 
         [SerializeField]
         public bool ShowIgnoredObjects;
 
         [SerializeField]
-        public bool Do_Show_Point_Positions;
+        public bool TriggerSpawnOverridesLogic;
 
         [SerializeField]
-        public bool Spawn_Wave_Trigger;
+        public int MaximalSpawnedObjectsAlive;
 
         [SerializeField]
-        public bool Trigger_Spawn_Overrides_Logic;
-
-        /// <summary>
-        /// Maximum of Objects that can be alive at the same time
-        /// Also used for the Wave continious wave spawner to check when its time for another wave
-        /// </summary>
-        [SerializeField]
-        public int Maximal_Spawned_Objects_Alive;
-
-        /// <summary>
-        /// Delay between spawns with the continious spawner
-        /// </summary>
-        [SerializeField]
-        public float Spawn_Delay;
-
-        /// <summary>
-        /// Range the Player has to be in for the spawner to spawn
-        /// </summary>
-        [SerializeField]
-        public float Range_To_Check;
-
-        /// <summary>
-        /// Do spawn objects even the Player is not in range
-        /// </summary>
-        [SerializeField]
-        public bool Do_Spawn_If_Not_In_Range;
-
-        /// <summary>
-        /// Do spawn another wave as soon as the other one is dead
-        /// </summary>
-        [SerializeField]
-        public bool Do_Spawn_Continuous_Waves;
-
-        /// <summary>
-        /// Do spawn in the selected cameras frustum
-        /// </summary>
-        [SerializeField]
-        public bool Do_Spawn_In_Frustum = true;
-
-        /// <summary>
-        /// Do limit the Objects for the continious spawner
-        /// </summary>
-        [SerializeField]
-        public bool Do_Limit_Objects_Alive;
-
-        /// <summary>
-        /// Is the Player/Selected Object in range
-        /// Dont change this manually
-        /// </summary>
-        [SerializeField]
-        public bool Is_Not_In_Range;
-
-        /// <summary>
-        /// List of the Spawned Objects which are alive
-        /// </summary>
-        /// 
+        public float SpawnDelay;
 
         [SerializeField]
-        public SpawnAbleObject[] Objects_To_Spawn;
-
+        public float RangeToCheck;
 
         [SerializeField]
-        public List<GameObject> Spawned_Objects;
+        public bool DoSpawnIfNotInRange;
 
-        /// <summary>
-        /// List of the Spawn positions
-        /// </summary>
         [SerializeField]
-        public List<Component> Spawn_Positions;
+        public bool DoSpawnContinuousWaves;
 
-        /// <summary>
-        /// The Player Object to check the Is_In_Range variable
-        /// </summary>
+        [SerializeField]
+        public bool DoSpawnInFrustum;
+
+        [SerializeField]
+        public bool DoLimitObjectsAlive;
+
+        [SerializeField]
+        public bool IsNotInRange;
+
+        [SerializeField]
+        public SpawnedObjectContainer SpawnedObjects = new SpawnedObjectContainer();
+
+        [SerializeField]
+        public List<Component> SpawnPositions;
+
         [SerializeField]
         public GameObject Player;
 
-        /// <summary>
-        /// Selected Object to spawn
-        /// </summary>
         [SerializeField]
-        public GameObject Object_To_Spawn;
-
-        /// <summary>
-        /// The Area for spawning 
-        /// </summary>
-        [SerializeField]
-        public GameObject Spawn_Area;
+        public GameObject SpawnArea;
 
         [SerializeField]
-        public PositioningOptions Selected_Spawn_Position_Option;
+        public PositioningOptions SelectedSpawnPositionOption;
 
         [SerializeField]
-        public SpawningStyles Selected_Spawning_Style;
+        public SpawningStyles SelectedSpawningStyle;
 
         [SerializeField]
-        public IdentifyPlayer Selected_Player_Identification;
+        public IdentifyPlayer SelectedPlayerIdentification;
 
         [SerializeField]
-        public DistanceCheckingStyles Selected_Distance_Check;
+        public DistanceCheckingStyles SelectedDistanceCheck;
 
         [SerializeField]
-        public Identification Player_Identification_Data;
+        public Identification PlayerIdentificationData;
 
         [SerializeField]
-        public Vector3 TestPosition;
-        /// <summary>
-        /// Camera to check the frustum of
-        /// </summary>
-        [SerializeField]
-        public Camera Frustum_Camera;
+        public Camera FrustumCamera;
 
-        [SerializeField]
-        float SpawnInterval;
+        private float SpawnInterval;
 
         void Awake()
         {
             this.InitializeSpawnPositions();
-        }
-
-        void Start()
-        {
-            this.InitializeObjectstoCheck();
+            this.InitializeObjecttoCheck();
         }
 
         void Update()
         {
-            if(Do_Spawn_If_Not_In_Range)
+            SpawningFunctions.TriggerSpawnOverridesLogic = TriggerSpawnOverridesLogic;
+            SpawningFunctions.IsTriggerSpawn = TriggerSpawn;           
+            SpawningFunctions.UseOcclusionCulling = UseOcclusionCulling;
+
+            SpawnedObjects.Update();
+            
+            if(DoSpawnIfNotInRange)
                 this.UpdateDistance();
 
-            SpawningFunctions.Trigger_Spawn_Overrides_Logic = Trigger_Spawn_Overrides_Logic;
-            SpawningFunctions.IsTriggerSpawn = Trigger_Spawn;
-            
-            SpawningFunctions.UseOcclusionCulling = UseOcclusionCulling;
-            this.InitializeObjectstoCheck();
-            this.CheckSpawnedObjects();
+            this.InitializeObjecttoCheck();
 
             SpawnInterval += Time.deltaTime;
 
             Component PositioningComponent = null;
 
-            switch (Selected_Spawning_Style)
+            switch (SelectedSpawningStyle)
             {
                 case SpawningStyles.Wave:
-                    {
-                        SelectedSpawningFunction  = SpawningFunctions.SpawnWaveInArea;
-                        PositioningComponent = Spawn_Area.GetComponent<SpawnArea>();
-                    }
+                    SelectedSpawningFunction = SpawningFunctions.SpawnWaveInArea;
+                    PositioningComponent = GetComponentInChildren<SpawnArea>();
                     break;
 
                 case SpawningStyles.Continuous:
-                    if (Selected_Spawn_Position_Option == PositioningOptions.Area)
+                    if (SelectedSpawnPositionOption == PositioningOptions.Area)
                     {
-                        PositioningComponent = Spawn_Area.GetComponent<SpawnArea>();
+                        PositioningComponent = GetComponentInChildren<SpawnArea>();
                         SelectedSpawningFunction = SpawningFunctions.SpawnPriorityObjectInArea;
                     }
 
                     else
                     {
-                        PositioningComponent = Spawn_Positions[0];
+                        PositioningComponent = SpawnPositions[0];
                         SelectedSpawningFunction = SpawningFunctions.SpawnPriorityObjectAtSpawnPoint;                                            
                     }
                     break;
             }
-            
-                Camera FrustumCamera = null;
 
-                if (!Do_Spawn_In_Frustum)
-                    FrustumCamera = Frustum_Camera;
+            Camera camera = null;
+
+            if (!DoSpawnInFrustum)
+                camera = FrustumCamera;
 
             if (IsSpawningAllowed())
             {
-                Trigger_Spawn = false;
+                TriggerSpawn = false;
 
-                GameObject[] SpawnedObjects = SelectedSpawningFunction(PositioningComponent, FrustumCamera);
-                if (SpawnedObjects != null)
+                GameObject[] ReturnedObjects = SelectedSpawningFunction(PositioningComponent, camera);
+                if (ReturnedObjects != null)
                 {
-                    if (SpawnedObjects.Length > 0)
-                    {
-                        SpawnInterval = 0f;
-
-                        foreach (var NewObject in SpawnedObjects)
-                        {
-                            Spawned_Objects.Add(NewObject);
-                        }
-                    }
+                    SpawnedObjects.AddObjects(ReturnedObjects);
+                    SpawnInterval = 0f;
                 }
             }
-
         }
 
         bool IsSpawningAllowed()
         {
-            if(!Trigger_Spawn_Overrides_Logic || (!Trigger_Spawn && Trigger_Spawn_Overrides_Logic))
+            if(!TriggerSpawnOverridesLogic || (!TriggerSpawn && TriggerSpawnOverridesLogic))
             {
                 int DesiredObjectAmount = 1;
 
                 if(SelectedSpawningFunction == SpawningFunctions.SpawnWaveInArea)            
                     DesiredObjectAmount = SpawningFunctions.WaveSpawnAmount;
             
-                if(Selected_Spawning_Style == SpawningStyles.Wave && Do_Spawn_Continuous_Waves)
+                if(SelectedSpawningStyle == SpawningStyles.Wave && DoSpawnContinuousWaves)
                 {
-                    if (Spawned_Objects.Count > 0 || Current_Continious_Wave_Status == ContiniousWaveStatus.Stopped || Do_Spawn_If_Not_In_Range && !Is_Not_In_Range)
+                    if (SpawnedObjects.Size > 0 || CurrentContiniousWaveStatus == ContiniousWaveStatus.Stopped || DoSpawnIfNotInRange && !IsNotInRange)
                         return false;
                 }         
 
-                else if(SpawnInterval < Spawn_Delay || Do_Spawn_If_Not_In_Range && !Is_Not_In_Range || (Do_Limit_Objects_Alive && Maximal_Spawned_Objects_Alive < DesiredObjectAmount + Spawned_Objects.Count))            
+                else if(SpawnInterval < SpawnDelay || DoSpawnIfNotInRange && !IsNotInRange || (DoLimitObjectsAlive && MaximalSpawnedObjectsAlive < DesiredObjectAmount + SpawnedObjects.Size))            
                     return false;
-
-
             }
             return true;            
         }
 
         void UpdateDistance()
         {
-            if (Do_Spawn_If_Not_In_Range && Player)
+            if (DoSpawnIfNotInRange && Player)
             {
-                switch (Selected_Distance_Check)
+                switch (SelectedDistanceCheck)
                 {
                     case DistanceCheckingStyles.TwoDimensionalCheck:
-                        Is_Not_In_Range = DistanceChecking.TwoDimensionalCheck(transform, Player.transform, Range_To_Check);
+                        IsNotInRange = DistanceChecking.TwoDimensionalCheck(transform, Player.transform, RangeToCheck);
                         break;
 
                     case DistanceCheckingStyles.ThreeDimensionalCheck:
-                        Is_Not_In_Range = DistanceChecking.ThreeDimensionalCheck(transform, Player.transform, Range_To_Check);
+                        IsNotInRange = DistanceChecking.ThreeDimensionalCheck(transform, Player.transform, RangeToCheck);
                         break;
                 }
             }
@@ -276,33 +193,33 @@ namespace DDS
 
         void OnTriggerEnter(Collider collider)
         {
-            if (Selected_Distance_Check == DistanceCheckingStyles.SphereColliderCheck)
+            if (SelectedDistanceCheck == DistanceCheckingStyles.SphereColliderCheck)
                 if (collider.gameObject == Player)
-                    Is_Not_In_Range = false;
+                    IsNotInRange = false;
         }
 
         void OnTriggerExit(Collider collider)
         {
-            if (Selected_Distance_Check == DistanceCheckingStyles.SphereColliderCheck)
+            if (SelectedDistanceCheck == DistanceCheckingStyles.SphereColliderCheck)
                 if (collider.gameObject == Player)
-                    Is_Not_In_Range = true;
+                    IsNotInRange = true;
 
         }
 
-        void InitializeObjectstoCheck()
+        void InitializeObjecttoCheck()
         {
-            switch (Selected_Player_Identification)
+            switch (SelectedPlayerIdentification)
             {
                 case IdentifyPlayer.byField:
-                    Player = Player_Identification_Data.Object;
+                    Player = PlayerIdentificationData.Object;
                     break;
 
                 case IdentifyPlayer.byName:
-                    Player = GameObject.Find(Player_Identification_Data.Name);
+                    Player = GameObject.Find(PlayerIdentificationData.Name);
                     break;
 
                 case IdentifyPlayer.byTag:
-                    string Tag = UnityEditorInternal.InternalEditorUtility.tags[Player_Identification_Data.Tag];
+                    string Tag = UnityEditorInternal.InternalEditorUtility.tags[PlayerIdentificationData.Tag];
                     Player = GameObject.FindWithTag(Tag);
                     break;
             }
@@ -310,71 +227,13 @@ namespace DDS
 
         public void InitializeSpawnPositions()
         {
-            Spawn_Positions = new List<Component>();
+            SpawnPositions = new List<Component>();
 
             foreach (var Child in transform.GetComponentsInChildren<SpawnPosition>())
             {
-                Spawn_Positions.Add(Child);
+                SpawnPositions.Add(Child);
             }
-        }
-
-        public void ResetSpawnedObjects()
-        {
-            for (int i = 0; i < Spawned_Objects.Count; i++)
-                Destroy(Spawned_Objects[i]);
-
-            Spawned_Objects.Clear();
-        }
-
-        void CheckSpawnedObjects()
-        {
-            for (int Index = 0; Index < Spawned_Objects.Count; Index++)
-            {
-                if (!Spawned_Objects[Index])
-                {
-                    Spawned_Objects.RemoveAt(Index);
-                }
-            }
-        }
-
-        bool IsPositionEmpty(GameObject Object)
-        {
-            Bounds ObjectBounds = new Bounds();
-
-            if (Object.GetComponent<Renderer>())
-                ObjectBounds = Object.GetComponent<Renderer>().bounds;
-
-            else if (Object.GetComponentInChildren<Renderer>())
-                ObjectBounds = Object.GetComponentInChildren<Renderer>().bounds;
-
-            else if (Object.GetComponentInParent<Renderer>())
-                ObjectBounds = Object.GetComponentInParent<Renderer>().bounds;
-
-
-            if (ObjectBounds == null)
-                return true;
-
-            Collider[] Colliders = Physics.OverlapBox(ObjectBounds.center, ObjectBounds.extents, Object.transform.rotation);
-
-            for (int index = 0; index < Colliders.Length; index++)
-            {
-                Bounds bounds = new Bounds();
-
-                if (Colliders[index].GetComponent<Renderer>())
-                    bounds = Colliders[index].GetComponent<Renderer>().bounds;
-
-                else if (Colliders[index].GetComponentInChildren<Renderer>())
-                    bounds = Colliders[index].GetComponentInChildren<Renderer>().bounds;
-
-                else if (Colliders[index].GetComponentInParent<Renderer>())
-                    bounds = Colliders[index].GetComponentInParent<Renderer>().bounds;
-
-                if (bounds != null)
-                    if (bounds.Intersects(ObjectBounds) && Colliders[index].gameObject != Object)
-                        return false;
-            }
-            return true;
-        }
+        }     
     }
 
 
@@ -419,47 +278,32 @@ namespace DDS
         {
             DynamicSpawned = target as Spawner;
 
-            if (DynamicSpawned.IgnoredObjects == null)
-            {
-                DynamicSpawned.IgnoredObjects = new List<GameObject>();
-            }
-
-            if (DynamicSpawned.Spawn_Positions == null)
-            {
-                DynamicSpawned.Spawned_Objects = new List<GameObject>();
-            }
-
-            if(DynamicSpawned.Objects_To_Spawn == null)
-            {
-                DynamicSpawned.Objects_To_Spawn = new SpawnAbleObject[0];
-            }
-
-            CurrentContiniousWaveStatus = this.serializedObject.FindProperty("Current_Continious_Wave_Status");
+            CurrentContiniousWaveStatus = this.serializedObject.FindProperty("CurrentContiniousWaveStatus");
             foldOutObjectsToSpawn = this.serializedObject.FindProperty("FoldoutObjectsToSpawn");
-            TriggerSpawnOverridesLogic = this.serializedObject.FindProperty("Trigger_Spawn_Overrides_Logic");
-            ObjectsToSpawn = this.serializedObject.FindProperty("Objects_To_Spawn");
+            TriggerSpawnOverridesLogic = this.serializedObject.FindProperty("TriggerSpawnOverridesLogic");
+            ObjectsToSpawn = this.serializedObject.FindProperty("ObjectsToSpawn");
             UseOcclusionCulling = this.serializedObject.FindProperty("UseOcclusionCulling");
-            ShowPointPositions = this.serializedObject.FindProperty("Do_Show_Point_Positions");
+            ShowPointPositions = this.serializedObject.FindProperty("DoShowPointPositions");
             IgnoredObjects = this.serializedObject.FindProperty("IgnoredObjects");
-            SpawnDelay = this.serializedObject.FindProperty("Spawn_Delay");
+            SpawnDelay = this.serializedObject.FindProperty("SpawnDelay");
             ShowIgnoredObjects = this.serializedObject.FindProperty("ShowIgnoredObjects");
-            WaveSpawnAmount = this.serializedObject.FindProperty("Wave_Spawn_Amount");
-            MaximalSpawnedObjectsAlive = this.serializedObject.FindProperty("Maximal_Spawned_Objects_Alive");
-            RangeToCheck = this.serializedObject.FindProperty("Range_To_Check");
-            DoSpawnIfNotInRange = this.serializedObject.FindProperty("Do_Spawn_If_Not_In_Range");
-            DoSpawnContiniousWaves = this.serializedObject.FindProperty("Do_Spawn_Continuous_Waves");
-            DoSpawnInFrustum = this.serializedObject.FindProperty("Do_Spawn_In_Frustum");
-            DoLimitObjectsAlive = this.serializedObject.FindProperty("Do_Limit_Objects_Alive");
-            IsNotInRange = this.serializedObject.FindProperty("Is_Not_In_Range");
-            SpawnPositions = this.serializedObject.FindProperty("Spawn_Positions");
+            WaveSpawnAmount = this.serializedObject.FindProperty("WaveSpawnAmount");
+            MaximalSpawnedObjectsAlive = this.serializedObject.FindProperty("MaximalSpawnedObjectsAlive");
+            RangeToCheck = this.serializedObject.FindProperty("RangeToCheck");
+            DoSpawnIfNotInRange = this.serializedObject.FindProperty("DoSpawnIfNotInRange");
+            DoSpawnContiniousWaves = this.serializedObject.FindProperty("DoSpawnContinuousWaves");
+            DoSpawnInFrustum = this.serializedObject.FindProperty("DoSpawnInFrustum");
+            DoLimitObjectsAlive = this.serializedObject.FindProperty("DoLimitObjectsAlive");
+            IsNotInRange = this.serializedObject.FindProperty("IsNotInRange");
+            SpawnPositions = this.serializedObject.FindProperty("SpawnPositions");
             Player = this.serializedObject.FindProperty("Player");
-            ObjectToSpawn = this.serializedObject.FindProperty("Object_To_Spawn");
-            SelectedSpawnPositionOption = this.serializedObject.FindProperty("Selected_Spawn_Position_Option");
-            SelectedSpawningStyle = this.serializedObject.FindProperty("Selected_Spawning_Style");
-            SelectedPlayerIdentification = this.serializedObject.FindProperty("Selected_Player_Identification");
-            SelectedDistanceCheck = this.serializedObject.FindProperty("Selected_Distance_Check");
-            PlayerIdentificationData = this.serializedObject.FindProperty("Player_Identification_Data");
-            FrustumCamera = this.serializedObject.FindProperty("Frustum_Camera");
+            ObjectToSpawn = this.serializedObject.FindProperty("ObjectToSpawn");
+            SelectedSpawnPositionOption = this.serializedObject.FindProperty("SelectedSpawnPositionOption");
+            SelectedSpawningStyle = this.serializedObject.FindProperty("SelectedSpawningStyle");
+            SelectedPlayerIdentification = this.serializedObject.FindProperty("SelectedPlayerIdentification");
+            SelectedDistanceCheck = this.serializedObject.FindProperty("SelectedDistanceCheck");
+            PlayerIdentificationData = this.serializedObject.FindProperty("PlayerIdentificationData");
+            FrustumCamera = this.serializedObject.FindProperty("FrustumCamera");
         }
 
         [MenuItem("GameObject/Dynamic Spawning System/SpawnPoint", false, 0)]
@@ -477,44 +321,15 @@ namespace DDS
             NewSpawnNode.name = "New Spawn Node";
         }
 
-        [MenuItem("GameObject/Spawner/Create a Spawn Area", false, 0)]
-        void AddSpawnArea()
-        {
-            
-        }
-
-        public void Awake()
-        {
-        }
-
         bool FoldOut;
 
         override public void OnInspectorGUI()
         {
             this.serializedObject.Update();
 
-            SpawningFunctions.Trigger_Spawn_Overrides_Logic = TriggerSpawnOverridesLogic.boolValue;
+            SpawningFunctions.TriggerSpawnOverridesLogic = TriggerSpawnOverridesLogic.boolValue;
                  
             EditorGUI.BeginChangeCheck();
-// 
-// //             EditorGUILayout.PropertyField(ObjectsToSpawn, new GUIContent("Objects to Spawn: "), true);
-// 
-//             SerializedProperty ObjectSize = ObjectsToSpawn.FindPropertyRelative("Array.size");
-// 
-//             if (ObjectSize.intValue > 20)
-//                 ObjectSize.intValue = 20;
-// 
-// //             for (int i = 0; i < ObjectSize.intValue; i++)
-// //             {
-// //                 string Name = "Empty";
-// //                 if (ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue != null)
-// //                     ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectName").stringValue = ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue.name;
-// // 
-// //                 else
-// //                 {
-// //                     ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectName").stringValue = Name;
-// //                 }
-// //             }
 
             EditorGUILayout.PropertyField(SelectedSpawningStyle, new GUIContent("Spawn Style: "), StandardLayout);
 
@@ -545,9 +360,13 @@ namespace DDS
                 if(DoSpawnContiniousWaves.boolValue)
                 {
                     EditorGUI.indentLevel++;
-                    EditorGUILayout.PropertyField(CurrentContiniousWaveStatus, new GUIContent("Current Continous Wave Status: "), true);
+                    EditorGUILayout.PropertyField(CurrentContiniousWaveStatus, new GUIContent("Current Status: "), true);
                     EditorGUI.indentLevel--;
+                }
 
+                else
+                {
+                    EditorGUILayout.PropertyField(SpawnDelay, new GUIContent("Spawn Delay: "), StandardLayout);
                 }
 
                 EditorGUILayout.PropertyField(WaveSpawnAmount, new GUIContent("Amount: "), StandardLayout);
@@ -649,18 +468,18 @@ namespace DDS
                         {
                             if (DynamicSpawned.transform.GetChild(childIndex).name == "SpawnArea")
                             {
-                                DynamicSpawned.Spawn_Area = DynamicSpawned.transform.GetChild(childIndex).gameObject; DynamicSpawned.Spawn_Area.GetComponent<MeshCollider>().hideFlags = HideFlags.HideInInspector;
+                                DynamicSpawned.SpawnArea = DynamicSpawned.transform.GetChild(childIndex).gameObject; DynamicSpawned.SpawnArea.GetComponent<MeshCollider>().hideFlags = HideFlags.HideInInspector;
                             }
                         }
 
-                        if (!DynamicSpawned.Spawn_Area)
+                        if (!DynamicSpawned.SpawnArea)
                         {
-                            DynamicSpawned.Spawn_Area = Instantiate(Resources.Load("SpawnArea", typeof(GameObject))) as GameObject; //Resources.Load<GameObject>("Assets /DynamicSpawningSystem/SpawnArea");
-                            DynamicSpawned.Spawn_Area.transform.SetParent(DynamicSpawned.transform);
-                            DynamicSpawned.Spawn_Area.transform.name = "SpawnArea";
-                            DynamicSpawned.Spawn_Area.transform.localPosition = new Vector3(0, 0, 0);
-                            DynamicSpawned.Spawn_Area.GetComponent<MeshCollider>().hideFlags = HideFlags.HideInInspector;
-                            DynamicSpawned.Spawn_Area.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
+                            DynamicSpawned.SpawnArea = Instantiate(Resources.Load("SpawnArea", typeof(GameObject))) as GameObject; //Resources.Load<GameObject>("Assets /DynamicSpawningSystem/SpawnArea");
+                            DynamicSpawned.SpawnArea.transform.SetParent(DynamicSpawned.transform);
+                            DynamicSpawned.SpawnArea.transform.name = "SpawnArea";
+                            DynamicSpawned.SpawnArea.transform.localPosition = new Vector3(0, 0, 0);
+                            DynamicSpawned.SpawnArea.GetComponent<MeshCollider>().hideFlags = HideFlags.HideInInspector;
+                            DynamicSpawned.SpawnArea.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                         }
 
                         break;

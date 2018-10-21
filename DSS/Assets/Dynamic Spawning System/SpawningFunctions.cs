@@ -12,12 +12,8 @@ namespace DDS
 {
     public static class SpawningFunctions
     {
-        delegate void WriteToConsole(string Text);
-
-        static WriteToConsole WriteError = delegate (string Text) { Debug.Log(Text); };
-
         static public int WaveSpawnAmount;
-        static public bool Trigger_Spawn_Overrides_Logic;
+        static public bool TriggerSpawnOverridesLogic;
         static public bool UseOcclusionCulling;
         static public bool IsTriggerSpawn = false;
         static public List<GameObject> FrustumIgnoredObjects;
@@ -149,7 +145,7 @@ namespace DDS
             if(GeometryUtility.TestPlanesAABB(CameraBounds, BoundsToCheck))
             {
                 if (!UseOcclusionCulling)
-                    return true;
+                    return false;
 
                 Vector3[] RayCastPositions = new Vector3[8];
 
@@ -188,17 +184,10 @@ namespace DDS
 
                         if (IsIgnoredObject)
                             return true;
-                    }
-                     
-                    
-
+                    }                                     
                 }
-
-
-
                 return false;
             }
-
 
             return false;
         }
@@ -256,17 +245,9 @@ namespace DDS
                         if (IsIgnoredObject)
                             return true;
                     }
-
-
-
                 }
-
-
-
                 return false;
             }
-
-
             return false;
         }
 
@@ -411,16 +392,20 @@ namespace DDS
             return ReturnField;
         }
 
-        //Returns the index number of the highest priority
         public static bool GetHighestSpawnPriority(SpawnAbleObject[] Objects, out int ObjectIndex)
         {
-            List<SpawnAbleObject> SpawnableObjects = new List<SpawnAbleObject>();
-                       
+            List<SpawnAbleObject> SpawnableObjects = new List<SpawnAbleObject>();                       
 
             ObjectIndex = 0;
 
             for(int i = 0; i < Objects.Length; i++)
             {
+                if (!Objects[i].ObjectToSpawn)
+                {
+                    Debug.Log("Object is null");
+                    return false;
+                }
+
                 if (Objects[i].ObjectToSpawn.GetComponent<PersonalLogicScript>() == null)                
                     SpawnableObjects.Add(Objects[i]);
                 
