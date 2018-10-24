@@ -15,6 +15,8 @@ namespace DDS
         [SerializeField]
         public ContiniousWaveStatus CurrentContiniousWaveStatus;
 
+        private int SelectedSpawnPosition;
+
 
         [SerializeField]
         public int WaveSpawnAmount;
@@ -93,21 +95,19 @@ namespace DDS
         void Awake()
         {
             this.InitializeSpawnPositions();
-            this.InitializeObjecttoCheck();
+            this.InitializeObjectToCheck();
         }
 
         void Update()
         {
             SpawningFunctions.TriggerSpawnOverridesLogic = TriggerSpawnOverridesLogic;
             SpawningFunctions.IsTriggerSpawn = TriggerSpawn;           
-            SpawningFunctions.UseOcclusionCulling = UseOcclusionCulling;
+            SpawningFunctions.UseOcclusionCulling = UseOcclusionCulling;          
 
             SpawnedObjects.Update();
             
             if(DoSpawnIfNotInRange)
                 this.UpdateDistance();
-
-            this.InitializeObjecttoCheck();
 
             SpawnInterval += Time.deltaTime;
 
@@ -129,7 +129,7 @@ namespace DDS
 
                     else
                     {
-                        PositioningComponent = SpawnPositions[0];
+                        PositioningComponent = SpawnPositions[SelectedSpawnPosition];
                         SelectedSpawningFunction = SpawningFunctions.SpawnPriorityObjectAtSpawnPoint;                                            
                     }
                     break;
@@ -153,6 +153,10 @@ namespace DDS
             }
         }
 
+        /// <summary>
+        /// Goes through the spawner logic to check if spawning is at this moment allowed.
+        /// </summary>
+        /// <returns></returns>
         bool IsSpawningAllowed()
         {
             if(!TriggerSpawnOverridesLogic || (!TriggerSpawn && TriggerSpawnOverridesLogic))
@@ -174,6 +178,9 @@ namespace DDS
             return true;            
         }
 
+        /// <summary>
+        /// Updates the boolean IsNotInRange based on the distance of the PlayerObject and the RangeTocheck.
+        /// </summary>
         void UpdateDistance()
         {
             if (DoSpawnIfNotInRange && Player)
@@ -191,6 +198,10 @@ namespace DDS
             }
         }
 
+        /// <summary>
+        /// Used if the DistanceCheckingStyle is set to SphereCollider to check if the PlayerObject is in the sphere. 
+        /// </summary>
+        /// <param name="collider"></param>
         void OnTriggerEnter(Collider collider)
         {
             if (SelectedDistanceCheck == DistanceCheckingStyles.SphereColliderCheck)
@@ -198,6 +209,10 @@ namespace DDS
                     IsNotInRange = false;
         }
 
+        /// <summary>
+        /// Used if the DistanceCheckingStyle is set to SphereCollider to check if the PlayerObject left the sphere. 
+        /// </summary>
+        /// <param name="collider"></param>
         void OnTriggerExit(Collider collider)
         {
             if (SelectedDistanceCheck == DistanceCheckingStyles.SphereColliderCheck)
@@ -206,7 +221,10 @@ namespace DDS
 
         }
 
-        void InitializeObjecttoCheck()
+        /// <summary>
+        /// Initializes the PlayerObject for the range check.
+        /// </summary>
+        public void InitializeObjectToCheck()
         {
             switch (SelectedPlayerIdentification)
             {
@@ -225,6 +243,9 @@ namespace DDS
             }
         }
 
+        /// <summary>
+        /// Initializes the ComponentList SpawnPositions with every child which contains the SpawnPosition component.
+        /// </summary>
         public void InitializeSpawnPositions()
         {
             SpawnPositions = new List<Component>();
@@ -234,6 +255,44 @@ namespace DDS
                 SpawnPositions.Add(Child);
             }
         }     
+
+        /// <summary>
+        /// Use this to change the currently selected SpawnPosition by index.
+        /// </summary>
+        /// <param name="PositionToSet"></param>
+        public void SetSpawnPosition(int PositionToSet)
+        {
+            try
+            {
+                if(!SpawnPositions[PositionToSet])
+                {
+                    SelectedSpawnPosition = PositionToSet;
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.Log(e.StackTrace + "" + "Position to set was out of bounds!");                
+            }
+        }
+
+        /// <summary>
+        /// Use this to change the currently selected SpawnPosition by the name.
+        /// </summary>
+        /// <param name="PositionName"></param>
+        public bool SetSpawnPosition(string PositionName)
+        {
+            for(int i = 0; i < SpawnPositions.Count; i++)
+            {
+                if(SpawnPositions[i].name == PositionName)
+                {
+                    SelectedSpawnPosition = i;
+                    return true;
+                }                
+            }
+
+            Debug.Log("Position with the name " + PositionName + " couldn't be found!");
+            return false;
+        }
     }
 
 
@@ -241,8 +300,6 @@ namespace DDS
     [CustomEditor(typeof(Spawner))]
     public class DynamicScriptEditor : Editor
     {
-        bool FoldOutTest;
-
         SerializedProperty CurrentContiniousWaveStatus;
         SerializedProperty foldOutObjectsToSpawn;
         SerializedProperty ShowPointPositions;

@@ -12,13 +12,35 @@ namespace DDS
 {
     public static class SpawningFunctions
     {
+        /// <summary>
+        /// Change this variable to adjust the number of objects you want to spawn.
+        /// </summary>
         static public int WaveSpawnAmount;
+
+        /// <summary>
+        /// If true any logic without the adjustable spawn height will be ignored on trigger spawns. 
+        /// </summary>
         static public bool TriggerSpawnOverridesLogic;
+
+        /// <summary>
+        /// If this is true the IsVisible will return false if the object is in frustum but behind a wall.
+        /// </summary>
         static public bool UseOcclusionCulling;
-        static public bool IsTriggerSpawn = false;
+
+        /// <summary>
+        /// On every trigger spawn this variable has to set to true to use the TriggerSpawnOverridesLogic variable.
+        /// </summary>
+        static public bool IsTriggerSpawn;
+
+        /// <summary>
+        /// This list holds all objects which are ignored by the OcclusionCulling.
+        /// </summary>
         static public List<GameObject> FrustumIgnoredObjects;
 
-
+        /// <summary>
+        /// Spawns an Object in the given Area Component if the logic allows it.
+        /// </summary>
+        /// <returns></returns>
         public static GameObject[] SpawnPriorityObjectInArea(Component AreaComponent, Camera FrustumCamera)
         {
             SpawnArea Area = (SpawnArea)AreaComponent;
@@ -46,6 +68,10 @@ namespace DDS
             return ReturnArray;
         }
 
+        /// <summary>
+        /// Spawns an Object ât the given Spawn Point Component if the logic allows it.
+        /// </summary>
+        /// <returns></returns>
         public static GameObject[] SpawnPriorityObjectAtSpawnPoint(Component SpawnPointComponent, Camera FrustumCamera)
         {
             SpawnPosition Point = (SpawnPosition)SpawnPointComponent;
@@ -71,6 +97,10 @@ namespace DDS
             return ReturnArray;
         }
 
+        /// <summary>
+        /// Spawns Objects in the given Area Component if the logic allows it.
+        /// </summary>
+        /// <returns></returns>
         public static GameObject[] SpawnWaveInArea(Component AreaComponent, Camera FrustumCamera)
         {
             SpawnArea Area = (SpawnArea)AreaComponent;
@@ -100,17 +130,10 @@ namespace DDS
             return ObjectsToReturn;
         }
 
-        public static bool IsAnyChildBlocked(GameObject Object, Vector3 DesiredPosition)
-        {
-            for(int ChildIndex = 0; ChildIndex < Object.transform.childCount; ChildIndex++)
-            {
-                if (IsPositionBlockedChild(Object.transform.GetChild(ChildIndex).gameObject, Object, DesiredPosition))
-                    return true;
-            }
-
-            return false;
-        }
-
+        /// <summary>
+        /// Checks if any child of the given object is in the frustum.
+        /// </summary>
+        /// <returns></returns>
         public static bool IsAnyChildVisible(GameObject Object, Vector3 DesiredPosition, Camera FrustumCamera)
         {
             for (int ChildIndex = 0; ChildIndex < Object.transform.childCount; ChildIndex++)
@@ -122,16 +145,10 @@ namespace DDS
             return false;
         }
 
-
-        private static Vector3 GetSpawnPoint(SpawnPosition SpawnPoint, float ObjectHeight, bool UsePointHeight)
-        {
-            Vector3 Position = SpawnPoint.GetSpawnPosition;
-            if (!UsePointHeight)
-                Position.y = ObjectHeight;
-
-            return Position;
-        }
-
+        /// <summary>
+        /// Checks if the object bounds is in the Camera Frustum.
+        /// </summary>
+        /// <returns></returns>
         public static bool IsVisible(Camera FrustumCamera, GameObject ObjectToCheck, Vector3 DesiredPosition)
         {
             GameObject BufferObject = ObjectToCheck;
@@ -192,6 +209,10 @@ namespace DDS
             return false;
         }
 
+        /// <summary>
+        /// Checks if the child is in the cameras frustum.
+        /// </summary>
+        /// <returns></returns>
         public static bool IsVisibleChild(Camera FrustumCamera, GameObject ObjectToCheck, GameObject Parent, Vector3 DesiredPosition)
         {
             GameObject BufferObject = ObjectToCheck;
@@ -251,106 +272,11 @@ namespace DDS
             return false;
         }
 
-        public static bool IsPositionBlocked(GameObject Object, Vector3 DesiredPosition)
-        {
-            Bounds ObjectBounds = new Bounds();
-
-            if (Object.GetComponent<Renderer>())
-                ObjectBounds = Object.GetComponent<Renderer>().bounds;
-
-            else if (Object.GetComponentInChildren<Renderer>())
-                ObjectBounds = Object.GetComponentInChildren<Renderer>().bounds;
-
-            else if (Object.GetComponentInParent<Renderer>())
-                ObjectBounds = Object.GetComponentInParent<Renderer>().bounds;
-
-            if (ObjectBounds == null)
-                return true;
-
-            Vector3 BoundsOffset = Object.transform.position - ObjectBounds.center;
-            ObjectBounds.center = DesiredPosition + BoundsOffset;
-
-            Collider[] Colliders = Physics.OverlapBox(ObjectBounds.center, ObjectBounds.extents, Object.transform.rotation);
-
-            for(int index = 0; index < Colliders.Length; index++)
-            {
-                if (Colliders[index].transform.parent == Object)
-                    Colliders[index] = null;
-            }
-
-            for (int index = 0; index < Colliders.Length; index++)
-            {
-                Bounds bounds = new Bounds();
-
-                if (Colliders[index].GetComponent<Renderer>())
-                    bounds = Colliders[index].GetComponent<Renderer>().bounds;
-
-                else if (Colliders[index].GetComponentInChildren<Renderer>())
-                    bounds = Colliders[index].GetComponentInChildren<Renderer>().bounds;
-
-                else if (Colliders[index].GetComponentInParent<Renderer>())
-                    bounds = Colliders[index].GetComponentInParent<Renderer>().bounds;
-
-                if (bounds != null)
-                    if (bounds.Intersects(ObjectBounds) && Colliders[index].gameObject != Object )
-                        return true;
-
-            }
-
-            return false;
-        }
-
-        public static bool IsPositionBlockedChild(GameObject Object, GameObject Parent, Vector3 DesiredPosition)
-        {
-            Bounds ObjectBounds = new Bounds();
-
-            if (Object.GetComponent<Renderer>())
-                ObjectBounds = Object.GetComponent<Renderer>().bounds;
-
-            else if (Object.GetComponentInChildren<Renderer>())
-                ObjectBounds = Object.GetComponentInChildren<Renderer>().bounds;
-
-            else if (Object.GetComponentInParent<Renderer>())
-                ObjectBounds = Object.GetComponentInParent<Renderer>().bounds;
-
-            if (ObjectBounds == null)
-                return true;
-
-            Vector3 BoundsOffset = Object.transform.position - ObjectBounds.center;
-            ObjectBounds.center = DesiredPosition + BoundsOffset + Object.transform.localPosition;
-
-            Collider[] Colliders = Physics.OverlapBox(ObjectBounds.center, ObjectBounds.extents, Object.transform.rotation);
-
-            for (int index = 0; index < Colliders.Length; index++)
-            {
-                if (Colliders[index].transform.parent == Parent)
-                    Colliders[index] = null;
-            }
-
-            for (int index = 0; index < Colliders.Length; index++)
-            {
-                Bounds bounds = new Bounds();
-
-                if (Colliders[index].GetComponent<Renderer>())
-                    bounds = Colliders[index].GetComponent<Renderer>().bounds;
-
-                else if (Colliders[index].GetComponentInChildren<Renderer>())
-                    bounds = Colliders[index].GetComponentInChildren<Renderer>().bounds;
-
-                else if (Colliders[index].GetComponentInParent<Renderer>())
-                    bounds = Colliders[index].GetComponentInParent<Renderer>().bounds;
-
-                if (bounds != null && Colliders[index].gameObject != Parent)
-                    if (bounds.Intersects(ObjectBounds) && Colliders[index].gameObject != Object)
-                    {
-                        return true;
-                    }
-
-            }
-
-            return false;
-        }
-
+        /// <summary>
+        /// Returns all childs and objects which are in the given List.
+        /// </summary>
+        /// <param name="Objects"></param>
+        /// <returns></returns>
         public static GameObject[] GetAllIgnoredObjects(List<IgnoredObject> Objects)
         {
             List<GameObject> ObjectsToReturn = new List<GameObject>();
@@ -392,6 +318,12 @@ namespace DDS
             return ReturnField;
         }
 
+        /// <summary>
+        /// Calculates the spawn weight and returns a random object based on that number.
+        /// </summary>
+        /// <param name="Objects"></param>
+        /// <param name="ObjectIndex"></param>
+        /// <returns></returns>
         public static bool GetHighestSpawnPriority(SpawnAbleObject[] Objects, out int ObjectIndex)
         {
             List<SpawnAbleObject> SpawnableObjects = new List<SpawnAbleObject>();                       
