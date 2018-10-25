@@ -12,9 +12,6 @@ namespace DDS
             AdaptableSpawnHeight = 1;            
         }
 
-        [HideInInspector]
-        public string ObjectName;
-
         public GameObject ObjectToSpawn;
 
         public bool ApplyLogicToChilds;

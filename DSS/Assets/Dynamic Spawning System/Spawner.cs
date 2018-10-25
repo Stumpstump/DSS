@@ -15,8 +15,8 @@ namespace DDS
         [SerializeField]
         public ContiniousWaveStatus CurrentContiniousWaveStatus;
 
+        [SerializeField]
         private int SelectedSpawnPosition;
-
 
         [SerializeField]
         public int WaveSpawnAmount;
@@ -326,6 +326,7 @@ namespace DDS
         SerializedProperty UseOcclusionCulling;
         SerializedProperty ObjectsToSpawn;
         SerializedProperty TriggerSpawnOverridesLogic;
+        SerializedProperty ActiveSpawnPoint;
 
         GUILayoutOption StandardLayout = GUILayout.Height(15);
 
@@ -335,6 +336,7 @@ namespace DDS
         {
             DynamicSpawned = target as Spawner;
 
+            ActiveSpawnPoint = this.serializedObject.FindProperty("SelectedSpawnPosition");
             CurrentContiniousWaveStatus = this.serializedObject.FindProperty("CurrentContiniousWaveStatus");
             foldOutObjectsToSpawn = this.serializedObject.FindProperty("FoldoutObjectsToSpawn");
             TriggerSpawnOverridesLogic = this.serializedObject.FindProperty("TriggerSpawnOverridesLogic");
@@ -544,6 +546,9 @@ namespace DDS
 
                 case PositioningOptions.Points:
                     {
+                        EditorGUI.indentLevel++;
+                        EditorGUILayout.PropertyField(ActiveSpawnPoint);
+                        EditorGUI.indentLevel--;
                         break;
                     }
             }

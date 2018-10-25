@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
+using System;
 
 namespace DDS
 {
@@ -9,34 +11,17 @@ namespace DDS
         [SerializeField]
         public SpawnAbleObject[] Objects_to_Spawn;
 
-        public bool UseYAxis;
-
+        [SerializeField]
         [Tooltip("Assign all Objects the ground detection should ignore to this mask")]
         public LayerMask IgnoredSpawnObject;
 
+        [SerializeField]
         [Tooltip("Adjust this height to not collide with the roof of the room etc.")]
         public float GroundDetectionHeight;
 
 
         void Start()
         {
-        }
-
-        public Vector3 GetSpawnPosition
-        {
-            get
-            {
-                if (UseYAxis)
-                {
-                    return transform.position;
-                }
-
-                else
-                {
-                    return new Vector3(transform.position.x, 0, transform.position.z);
-                }
-
-            }
         }
 
         /// <summary>
@@ -127,6 +112,69 @@ namespace DDS
             }
 
             return true;
+        }
+    }
+
+    [CustomEditor(typeof(SpawnPosition))]
+    public class PositionSpawningEditor : Editor
+    {
+        SerializedProperty GroundDetectionHeight;
+        SerializedProperty ObjectsToSpawn;
+        SerializedProperty ObjectsToIgnore;
+
+        SpawnPosition SerializedObject;
+
+        GUILayoutOption[] ButtonLayout;
+
+        void Awake()
+        {
+            SerializedObject = target as SpawnPosition;
+
+            GroundDetectionHeight = this.serializedObject.FindProperty("GroundDetectionHeight");
+            ObjectsToSpawn = this.serializedObject.FindProperty("Objects_to_Spawn");
+            ObjectsToIgnore = this.serializedObject.FindProperty("IgnoredSpawnObject");
+
+            ButtonLayout = new GUILayoutOption[2];
+            ButtonLayout[0] = GUILayout.Height(15);
+            ButtonLayout[1] = GUILayout.Width(100);
+        }
+
+        override public void OnInspectorGUI()
+        {
+            EditorGUI.BeginChangeCheck();
+
+            
+            //EditorGUILayout.PropertyField();
+            EditorGUILayout.PropertyField(ObjectsToIgnore);
+            EditorGUILayout.PropertyField(GroundDetectionHeight);
+
+            int ObjectsToSpawnSize = ObjectsToSpawn.arraySize;
+
+            for(int i = 0; i < ObjectsToSpawn.arraySize; i++)
+            {
+                string ObjectName = "Empty";
+
+                if (ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue != null)
+                    ObjectName = ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue.name;
+
+                EditorGUILayout.PropertyField(ObjectsToSpawn.GetArrayElementAtIndex(i), new GUIContent(ObjectName), true);
+            }
+
+            if(ObjectsToSpawn.arraySize < 10)
+            {
+                if(GUILayout.Button(new GUIContent("Add Element"), ButtonLayout))
+                {
+                    Array.Resize(ref SerializedObject.Objects_to_Spawn, SerializedObject.Objects_to_Spawn.Length + 1);
+                    SerializedObject.Objects_to_Spawn[SerializedObject.Objects_to_Spawn.Length - 1] = new SpawnAbleObject();
+                }
+            }
+
+
+            EditorGUI.EndChangeCheck();
+
+            this.serializedObject.ApplyModifiedProperties();
+
+
         }
     }
 

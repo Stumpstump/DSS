@@ -45,8 +45,21 @@ namespace DDS
         {
             SpawnArea Area = (SpawnArea)AreaComponent;
 
-            SpawnAbleObject[] Objects = Area.Objects_to_Spawn;
+            List<SpawnAbleObject> NotEmptyObjects = new List<SpawnAbleObject>();
 
+            for(int i = 0; i < Area.Objects_to_Spawn.Length; i++)
+            {
+                if (Area.Objects_to_Spawn[i].ObjectToSpawn != null)
+                    NotEmptyObjects.Add(Area.Objects_to_Spawn[i]);
+            }
+
+            SpawnAbleObject[] Objects = NotEmptyObjects.ToArray();
+
+            if(Objects.Length == 0)
+            {
+                Debug.Log(AreaComponent.name + "contains only empty objects.");
+                return null;
+            }
 
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
@@ -76,7 +89,21 @@ namespace DDS
         {
             SpawnPosition Point = (SpawnPosition)SpawnPointComponent;
 
-            SpawnAbleObject[] Objects = Point.Objects_to_Spawn;
+            List<SpawnAbleObject> NotEmptyObjects = new List<SpawnAbleObject>();
+
+            for (int i = 0; i < Point.Objects_to_Spawn.Length; i++)
+            {
+                if (Point.Objects_to_Spawn[i].ObjectToSpawn != null)
+                    NotEmptyObjects.Add(Point.Objects_to_Spawn[i]);
+            }
+
+            SpawnAbleObject[] Objects = NotEmptyObjects.ToArray();
+
+            if (Objects.Length == 0)
+            {
+                Debug.Log(Point.name + "contains only empty objects.");
+                return null;
+            }
 
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
@@ -105,7 +132,21 @@ namespace DDS
         {
             SpawnArea Area = (SpawnArea)AreaComponent;
 
-            SpawnAbleObject[] Objects = Area.Objects_to_Spawn;
+            List<SpawnAbleObject> NotEmptyObjects = new List<SpawnAbleObject>();
+
+            for (int i = 0; i < Area.Objects_to_Spawn.Length; i++)
+            {
+                if (Area.Objects_to_Spawn[i].ObjectToSpawn != null)
+                    NotEmptyObjects.Add(Area.Objects_to_Spawn[i]);
+            }
+
+            SpawnAbleObject[] Objects = NotEmptyObjects.ToArray();
+
+            if (Objects.Length == 0)
+            {
+                Debug.Log(AreaComponent.name + "contains only empty objects.");
+                return null;
+            }
 
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
@@ -385,5 +426,7 @@ namespace DDS
             return false;
         }
     }
+
+
 }
 

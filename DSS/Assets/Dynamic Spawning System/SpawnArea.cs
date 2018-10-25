@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
+using System;
 
 namespace DDS
 { 
@@ -9,9 +11,11 @@ namespace DDS
         [SerializeField]
         public SpawnAbleObject[] Objects_to_Spawn;
 
+        [SerializeField]
         [Tooltip("Assign all Objects the ground detection should ignore to this mask")]
         public LayerMask IgnoredSpawnObject;
 
+        [SerializeField]
         [Tooltip("Adjust this height to not collide with the roof of the room, etc.")]
         public float GroundDetectionHeight;
 
@@ -30,7 +34,7 @@ namespace DDS
                 MaxZ = transform.position.z + GetComponent<MeshCollider>().bounds.extents.z;
                 MinZ = transform.position.z - GetComponent<MeshCollider>().bounds.extents.z;                
 
-                return new Vector3(Random.Range(MinX, MaxX), 0, Random.Range(MinZ, MaxZ));
+                return new Vector3(UnityEngine.Random.Range(MinX, MaxX), 0, UnityEngine.Random.Range(MinZ, MaxZ));
             }
         }
 
@@ -237,7 +241,7 @@ namespace DDS
                 if (Loop > MaxLoops)
                     return false;
 
-                int SelectedPosition = Random.Range(0, SpawnAblePositions.Count - 1);
+                int SelectedPosition = UnityEngine.Random.Range(0, SpawnAblePositions.Count - 1);
 
                 bool AlreadyUsed = false;
 
@@ -274,6 +278,69 @@ namespace DDS
             return true;
         }
 
+    }
+
+    [CustomEditor(typeof(SpawnArea))]
+    public class AreaSpawningEditor : Editor
+    {
+        SerializedProperty GroundDetectionHeight;
+        SerializedProperty ObjectsToSpawn;
+        SerializedProperty ObjectsToIgnore;
+
+        SpawnArea SerializedObject;
+
+        GUILayoutOption[] ButtonLayout;
+
+        void Awake()
+        {
+            SerializedObject = target as SpawnArea;
+
+            GroundDetectionHeight = this.serializedObject.FindProperty("GroundDetectionHeight");
+            ObjectsToSpawn = this.serializedObject.FindProperty("Objects_to_Spawn");
+            ObjectsToIgnore = this.serializedObject.FindProperty("IgnoredSpawnObject");
+
+            ButtonLayout = new GUILayoutOption[2];
+            ButtonLayout[0] = GUILayout.Height(15);
+            ButtonLayout[1] = GUILayout.Width(100);
+        }
+
+        override public void OnInspectorGUI()
+        {
+            EditorGUI.BeginChangeCheck();
+
+
+            //EditorGUILayout.PropertyField();
+            EditorGUILayout.PropertyField(ObjectsToIgnore);
+            EditorGUILayout.PropertyField(GroundDetectionHeight);
+
+            int ObjectsToSpawnSize = ObjectsToSpawn.arraySize;
+
+            for (int i = 0; i < ObjectsToSpawn.arraySize; i++)
+            {
+                string ObjectName = "Empty";
+
+                if (ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue != null)
+                    ObjectName = ObjectsToSpawn.GetArrayElementAtIndex(i).FindPropertyRelative("ObjectToSpawn").objectReferenceValue.name;
+
+                EditorGUILayout.PropertyField(ObjectsToSpawn.GetArrayElementAtIndex(i), new GUIContent(ObjectName), true);
+            }
+
+            if (ObjectsToSpawn.arraySize < 10)
+            {
+                if (GUILayout.Button(new GUIContent("Add Element"), ButtonLayout))
+                {
+                    Array.Resize(ref SerializedObject.Objects_to_Spawn, SerializedObject.Objects_to_Spawn.Length + 1);
+                    SerializedObject.Objects_to_Spawn[SerializedObject.Objects_to_Spawn.Length - 1] = new SpawnAbleObject();
+                }
+            }
+
+
+            EditorGUI.EndChangeCheck();
+
+            this.serializedObject.ApplyModifiedProperties();
+
+
+        }
     }
 
 }

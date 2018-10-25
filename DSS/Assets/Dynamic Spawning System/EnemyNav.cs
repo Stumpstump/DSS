@@ -10,6 +10,8 @@ public class EnemyNav : MonoBehaviour {
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
         agent = GetComponent<NavMeshAgent>();
+
+
     }
 
     void Update()
