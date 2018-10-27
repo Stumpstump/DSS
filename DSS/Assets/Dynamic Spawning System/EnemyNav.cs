@@ -16,10 +16,7 @@ public class EnemyNav : MonoBehaviour {
 
     void Update()
     {
-
-       
+        if (player != null)
             agent.SetDestination(player.position);
-        
-      
     }
 }

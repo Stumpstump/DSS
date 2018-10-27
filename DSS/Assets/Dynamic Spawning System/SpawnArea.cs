@@ -6,12 +6,9 @@ using System;
 
 namespace DDS
 { 
-    public class SpawnArea : MonoBehaviour
+    public class SpawnArea : SpawningComponent
     {
-        [SerializeField]
-        public SpawnAbleObject[] Objects_to_Spawn;
-
-        [SerializeField]
+       [SerializeField]
         [Tooltip("Assign all Objects the ground detection should ignore to this mask")]
         public LayerMask IgnoredSpawnObject;
 
@@ -20,30 +17,10 @@ namespace DDS
         public float GroundDetectionHeight;
 
         /// <summary>
-        /// Returns a random Point in the Area of the boundings
-        /// </summary>
-        public Vector3 GetRandomPosition
-        {
-            get
-            {
-                float MinZ, MinX, MaxX, MaxZ;
-
-                MaxX = transform.position.x + GetComponent<MeshCollider>().bounds.extents.x;
-                MinX = transform.position.x - GetComponent<MeshCollider>().bounds.extents.x;
-
-                MaxZ = transform.position.z + GetComponent<MeshCollider>().bounds.extents.z;
-                MinZ = transform.position.z - GetComponent<MeshCollider>().bounds.extents.z;                
-
-                return new Vector3(UnityEngine.Random.Range(MinX, MaxX), 0, UnityEngine.Random.Range(MinZ, MaxZ));
-            }
-        }
-
-
-        /// <summary>
         /// Set FrustumCamera to null if you don't want the Frustum Check.
         /// Returns false if it couldn't allocate the desired amount of positions.
         /// </summary>
-        public bool GetRandomCheckedPositions(SpawnAbleObject Object, int DesiredAmountOfPositions, Camera FrustumCamera, out Vector3[] ReturnedPositions)
+        public override bool GetPositions(SpawnAbleObject Object, int DesiredAmountOfPositions, Camera FrustumCamera, out Vector3[] ReturnedPositions)
         {
 
             PersonalLogicScript PersonalScript = Object.ObjectToSpawn.GetComponent<PersonalLogicScript>();
@@ -58,8 +35,6 @@ namespace DDS
 
             Bounds ObjectBounds = Object.ObjectToSpawn.GetComponent<Renderer>().bounds;
 
-            Vector3 CenterOffset = new Vector3();
-
             if (Object.ApplyLogicToChilds)
             {
                 foreach (Renderer renderer in Object.ObjectToSpawn.GetComponentsInChildren<Renderer>())
@@ -68,8 +43,7 @@ namespace DDS
                 }
             }
 
-            CenterOffset = ObjectBounds.center - Object.ObjectToSpawn.transform.position;
-
+            ObjectBounds.center = ObjectBounds.center - Object.ObjectToSpawn.transform.position;
 
             float AreaWidth, AreaLength, ObjectWidth, ObjectLength;
 
@@ -98,11 +72,7 @@ namespace DDS
 
             Vector3 LastPosition = new Vector3();
 
-            LastPosition.x = transform.position.x - GetComponent<MeshCollider>().bounds.size.x;
-            LastPosition.x += ObjectWidth / 2;
-
-            LastPosition.z = transform.position.z - GetComponent<MeshCollider>().bounds.size.z;
-            LastPosition.z += ObjectLength / 2;
+            LastPosition = AreaTopRightPosition;
 
             int CurrentRow = 1, CurrentColumn = 1;
 
@@ -110,7 +80,7 @@ namespace DDS
 
             for (int i = 1; i < ContainableAreaSize; i++)
             {
-                if(CurrentColumn > ContainableSizeWidth)
+                if(CurrentColumn > (int)ContainableSizeWidth)
                 {
                     CurrentColumn = 1;
                     CurrentRow += 1; 
@@ -161,10 +131,10 @@ namespace DDS
 
                 float Distance = 0;
 
-                if (Hit.point.y + ObjectBounds.size.y / 2 < transform.position.y)
+                if (Hit.point.y + ObjectBounds.size.y / 2 > transform.position.y + ObjectBounds.size.y / 2)
                 {
                     Distance = Hit.point.y + ObjectBounds.size.y / 2 - transform.position.y + ObjectBounds.size.y / 2;
-
+                
                     if (Distance < 0)
                         Distance *= -1;
                 }
@@ -333,6 +303,8 @@ namespace DDS
                     SerializedObject.Objects_to_Spawn[SerializedObject.Objects_to_Spawn.Length - 1] = new SpawnAbleObject();
                 }
             }
+
+        
 
 
             EditorGUI.EndChangeCheck();

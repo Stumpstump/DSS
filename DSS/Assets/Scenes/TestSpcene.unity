@@ -274,7 +274,7 @@ GameObject:
   - component: {fileID: 691406001}
   - component: {fileID: 691406000}
   - component: {fileID: 691405999}
-  m_Layer: 10
+  m_Layer: 0
   m_Name: Terrain
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -429,14 +429,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Objects_to_Spawn:
-  - ObjectToSpawn: {fileID: 1451165864}
-    ApplyLogicToChilds: 1
-    ChanceToSpawn: 1
-    AdaptableSpawnHeight: 1
-  - ObjectToSpawn: {fileID: 1451165863}
+  - ObjectToSpawn: {fileID: 7304591695469176915, guid: fc670112772044bfdb362ee2c09165e2, type: 3}
     ApplyLogicToChilds: 0
     ChanceToSpawn: 1
     AdaptableSpawnHeight: 1
+  - ObjectToSpawn: {fileID: 7368568869301895237, guid: 0710ea5f9931948d4ad8a873f3a29ac1, type: 3}
+    ApplyLogicToChilds: 0
+    ChanceToSpawn: 1
+    AdaptableSpawnHeight: 0
   IgnoredSpawnObject:
     serializedVersion: 2
     m_Bits: 0
@@ -472,7 +472,7 @@ GameObject:
   - component: {fileID: 1393678821}
   - component: {fileID: 1393678820}
   - component: {fileID: 1393678819}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: SpawnArea
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -495,10 +495,26 @@ MonoBehaviour:
   - ObjectToSpawn: {fileID: 7368568869301895237, guid: 0710ea5f9931948d4ad8a873f3a29ac1, type: 3}
     ApplyLogicToChilds: 0
     ChanceToSpawn: 1
+    AdaptableSpawnHeight: 2
+  - ObjectToSpawn: {fileID: 0}
+    ApplyLogicToChilds: 0
+    ChanceToSpawn: 1
+    AdaptableSpawnHeight: 1
+  - ObjectToSpawn: {fileID: 0}
+    ApplyLogicToChilds: 0
+    ChanceToSpawn: 1
+    AdaptableSpawnHeight: 1
+  - ObjectToSpawn: {fileID: 0}
+    ApplyLogicToChilds: 0
+    ChanceToSpawn: 1
+    AdaptableSpawnHeight: 1
+  - ObjectToSpawn: {fileID: 0}
+    ApplyLogicToChilds: 0
+    ChanceToSpawn: 1
     AdaptableSpawnHeight: 1
   IgnoredSpawnObject:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1024
   GroundDetectionHeight: 5
 --- !u!64 &1393678820
 MeshCollider:
@@ -621,16 +637,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7737647c22c1fc64a88d5cd030c352ce, type: 3}
---- !u!1 &1451165863 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 140172, guid: 7737647c22c1fc64a88d5cd030c352ce, type: 3}
-  m_PrefabInstance: {fileID: 1451165862}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1451165864 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 130798, guid: 7737647c22c1fc64a88d5cd030c352ce, type: 3}
-  m_PrefabInstance: {fileID: 1451165862}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &375994096471272588
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -644,7 +650,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 996282854044646582, guid: 53aec8a40b9fa478c8303aa23a4b5b7f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.21
+      value: 0.051
       objectReference: {fileID: 0}
     - target: {fileID: 996282854044646582, guid: 53aec8a40b9fa478c8303aa23a4b5b7f, type: 3}
       propertyPath: m_LocalPosition.z
@@ -752,17 +758,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CurrentContiniousWaveStatus: 0
+  SelectedSpawnPosition: 0
   WaveSpawnAmount: 1
   UseOcclusionCulling: 0
   IgnoredObjects: []
   TriggerSpawn: 0
   ShowIgnoredObjects: 0
-  TriggerSpawnOverridesLogic: 0
+  TriggerSpawnOverridesLogic: 1
   MaximalSpawnedObjectsAlive: 0
-  SpawnDelay: 5
+  SpawnDelay: 0
   RangeToCheck: 0
   DoSpawnIfNotInRange: 0
-  DoSpawnContinuousWaves: 0
+  DoSpawnContinuousWaves: 1
   DoSpawnInFrustum: 0
   DoLimitObjectsAlive: 0
   IsNotInRange: 0
@@ -831,7 +838,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 375994096471272589}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.01, y: 0.21, z: 9.06}
+  m_LocalPosition: {x: -2.01, y: 0.051, z: 9.06}
   m_LocalScale: {x: 1, y: 0.3, z: 1}
   m_Children:
   - {fileID: 1111403212}

@@ -35,6 +35,30 @@ using UnityEngine;
             return Mathf.Sqrt(DistanceX + DistanceZ) >= MaxDistance;
         }
 
+    static public bool TwoDimensionalCheck(Vector3 Position1, Vector3 Position2, float MaxDistance)
+    {
+
+        float DistanceX, DistanceZ;
+
+        DistanceX = Position1.x - Position2.x;
+        DistanceZ = Position1.z - Position2.z;
+
+        if (DistanceX < 0f)
+        {
+            DistanceX *= -1;
+        }
+
+        if (DistanceZ < 0f)
+        {
+            DistanceZ *= -1;
+        }
+
+        DistanceX *= DistanceX;
+        DistanceZ *= DistanceZ;
+
+        return Mathf.Sqrt(DistanceX + DistanceZ) >= MaxDistance;
+    }
+
     /// <summary>
     /// returns if the (X,Y,Z) distance of the given Objects is smaller than the given Max Distance  
     /// </summary>

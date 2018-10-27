@@ -12,6 +12,6 @@ namespace DDS
     [System.Serializable]
     public enum PositioningOptions
     {
-        Area, Points
+        Area, Point
     }
 }

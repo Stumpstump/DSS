@@ -37,139 +37,56 @@ namespace DDS
         /// </summary>
         static public List<GameObject> FrustumIgnoredObjects;
 
-        /// <summary>
-        /// Spawns an Object in the given Area Component if the logic allows it.
-        /// </summary>
-        /// <returns></returns>
-        public static GameObject[] SpawnPriorityObjectInArea(Component AreaComponent, Camera FrustumCamera)
-        {
-            SpawnArea Area = (SpawnArea)AreaComponent;
+        public static GameObject[] Spawn(SpawningComponent PositioningComponent, Camera FrustumCamera, SpawningStyles SpawnType)
+        {            
+            if (PositioningComponent is SpawnPosition && SpawnType == SpawningStyles.Wave)
+                return null;
 
             List<SpawnAbleObject> NotEmptyObjects = new List<SpawnAbleObject>();
 
-            for(int i = 0; i < Area.Objects_to_Spawn.Length; i++)
+            for (int i = 0; i < PositioningComponent.Objects_to_Spawn.Length; i++)
             {
-                if (Area.Objects_to_Spawn[i].ObjectToSpawn != null)
-                    NotEmptyObjects.Add(Area.Objects_to_Spawn[i]);
+                if (PositioningComponent.Objects_to_Spawn[i].ObjectToSpawn != null)
+                    NotEmptyObjects.Add(PositioningComponent.Objects_to_Spawn[i]);
             }
+
+            foreach (var Object in NotEmptyObjects)
+            {
+                if (Object.ObjectToSpawn.GetComponent<PersonalLogicScript>())
+                    if (!Object.ObjectToSpawn.GetComponent<PersonalLogicScript>().DoSpawn)
+                        NotEmptyObjects.Remove(Object);
+            }
+
+            if (NotEmptyObjects.Count == 0)
+                return null;
 
             SpawnAbleObject[] Objects = NotEmptyObjects.ToArray();
-
-            if(Objects.Length == 0)
-            {
-                Debug.Log(AreaComponent.name + "contains only empty objects.");
-                return null;
-            }
 
             int IndexOfObject = 0;
             if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
                 return null;
 
-            if (Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>())
-                if (!Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>().DoSpawn)
-                    return null;
+            Vector3[] Positions = new Vector3[0];
 
-            Vector3[] Position;
-            if (!Area.GetRandomCheckedPositions(Objects[IndexOfObject], 1, FrustumCamera, out Position))
+            int SpawnAmount = WaveSpawnAmount;
+
+            if (SpawnType == SpawningStyles.Continuous)
+                SpawnAmount = 1;
+
+            if (!PositioningComponent.GetPositions(Objects[IndexOfObject], SpawnAmount, FrustumCamera, out Positions))
                 return null;
 
+            GameObject[] ObjectsToReturn = new GameObject[Positions.Length];
 
-            GameObject[] ReturnArray = new GameObject[1];
-
-            ReturnArray[0] = GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Position[0], Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
-
-            return ReturnArray;
-        }
-
-        /// <summary>
-        /// Spawns an Object ât the given Spawn Point Component if the logic allows it.
-        /// </summary>
-        /// <returns></returns>
-        public static GameObject[] SpawnPriorityObjectAtSpawnPoint(Component SpawnPointComponent, Camera FrustumCamera)
-        {
-            SpawnPosition Point = (SpawnPosition)SpawnPointComponent;
-
-            List<SpawnAbleObject> NotEmptyObjects = new List<SpawnAbleObject>();
-
-            for (int i = 0; i < Point.Objects_to_Spawn.Length; i++)
+            for(int index = 0; index < Positions.Length; index++)
             {
-                if (Point.Objects_to_Spawn[i].ObjectToSpawn != null)
-                    NotEmptyObjects.Add(Point.Objects_to_Spawn[i]);
+                ObjectsToReturn[index] = GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Positions[index], Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
             }
-
-            SpawnAbleObject[] Objects = NotEmptyObjects.ToArray();
-
-            if (Objects.Length == 0)
-            {
-                Debug.Log(Point.name + "contains only empty objects.");
-                return null;
-            }
-
-            int IndexOfObject = 0;
-            if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
-                return null;
-
-            if (Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>())
-                if (!Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>().DoSpawn)
-                    return null;
-
-            Vector3 Position;
-            if (!Point.GetCheckedSpawnPosition(Objects[IndexOfObject], FrustumCamera, out Position))
-                return null;
-
-            GameObject[] ReturnArray = new GameObject[1];
-
-            ReturnArray[0] = GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Position, Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
-
-            return ReturnArray;
-        }
-
-        /// <summary>
-        /// Spawns Objects in the given Area Component if the logic allows it.
-        /// </summary>
-        /// <returns></returns>
-        public static GameObject[] SpawnWaveInArea(Component AreaComponent, Camera FrustumCamera)
-        {
-            SpawnArea Area = (SpawnArea)AreaComponent;
-
-            List<SpawnAbleObject> NotEmptyObjects = new List<SpawnAbleObject>();
-
-            for (int i = 0; i < Area.Objects_to_Spawn.Length; i++)
-            {
-                if (Area.Objects_to_Spawn[i].ObjectToSpawn != null)
-                    NotEmptyObjects.Add(Area.Objects_to_Spawn[i]);
-            }
-
-            SpawnAbleObject[] Objects = NotEmptyObjects.ToArray();
-
-            if (Objects.Length == 0)
-            {
-                Debug.Log(AreaComponent.name + "contains only empty objects.");
-                return null;
-            }
-
-            int IndexOfObject = 0;
-            if (!GetHighestSpawnPriority(Objects, out IndexOfObject))
-                return null;
-
-            if (Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>())
-                if (!Objects[IndexOfObject].ObjectToSpawn.GetComponent<PersonalLogicScript>().DoSpawn)
-                    return null;
-
-            Vector3[] Positions;
-
-            if (!Area.GetRandomCheckedPositions(Objects[IndexOfObject], WaveSpawnAmount, FrustumCamera, out Positions))
-                return null;
-
-            GameObject[] ObjectsToReturn = new GameObject[WaveSpawnAmount];
-
-            for(int i = 0; i < WaveSpawnAmount; i++)
-            {
-                ObjectsToReturn[i] = GameObject.Instantiate(Objects[IndexOfObject].ObjectToSpawn, Positions[i], Objects[IndexOfObject].ObjectToSpawn.transform.rotation);
-            }
-
+           
             return ObjectsToReturn;
         }
+
+     
 
         /// <summary>
         /// Checks if any child of the given object is in the frustum.

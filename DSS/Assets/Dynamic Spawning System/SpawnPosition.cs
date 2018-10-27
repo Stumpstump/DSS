@@ -6,10 +6,8 @@ using System;
 
 namespace DDS
 {
-    public class SpawnPosition : MonoBehaviour
+    public class SpawnPosition : SpawningComponent
     {
-        [SerializeField]
-        public SpawnAbleObject[] Objects_to_Spawn;
 
         [SerializeField]
         [Tooltip("Assign all Objects the ground detection should ignore to this mask")]
@@ -28,7 +26,7 @@ namespace DDS
         /// Set FrustumCamera to null if you don't want the Frustum Check.
         /// Returns false if it couldn't allocate the desired amount of positions.
         /// </summary>
-        public bool GetCheckedSpawnPosition(SpawnAbleObject Object, Camera FrustumCamera, out Vector3 ReturnedPosition)
+        public override bool GetPositions(SpawnAbleObject Object, int AmountOfPosition, Camera FrustumCamera, out Vector3[] ReturnedPosition)
         {
             PersonalLogicScript PersonalScript = Object.ObjectToSpawn.GetComponent<PersonalLogicScript>();
                         
@@ -39,10 +37,11 @@ namespace DDS
                 UsePersonalLogic = true;
             }
 
-            ReturnedPosition = new Vector3();
+            ReturnedPosition = new Vector3[1];
+            ReturnedPosition[0] = new Vector3();
 
-            ReturnedPosition.x = transform.position.x;
-            ReturnedPosition.z = transform.position.z;
+            ReturnedPosition[0].x = transform.position.x;
+            ReturnedPosition[0].z = transform.position.z;
 
             Bounds ObjectBounds = Object.ObjectToSpawn.GetComponent<Renderer>().bounds;
 
@@ -68,7 +67,7 @@ namespace DDS
 
             float Distance = 0;
 
-            if (Hit.point.y + ObjectBounds.size.y / 2 < transform.position.y)
+            if (Hit.point.y + ObjectBounds.size.y / 2 > transform.position.y + ObjectBounds.size.y / 2)
             {
                 Distance = Hit.point.y + ObjectBounds.size.y / 2 - transform.position.y + ObjectBounds.size.y / 2;
 
@@ -76,7 +75,7 @@ namespace DDS
                     Distance *= -1;
             }
 
-            ReturnedPosition.y = Hit.point.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2;
+            ReturnedPosition[0].y = Hit.point.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2;
             
 
             if (!UsePersonalLogic)
@@ -102,11 +101,11 @@ namespace DDS
 
                 if (FrustumCamera != null)
                 {
-                    if (SpawningFunctions.IsVisible(FrustumCamera, Object.ObjectToSpawn, ReturnedPosition))
+                    if (SpawningFunctions.IsVisible(FrustumCamera, Object.ObjectToSpawn, ReturnedPosition[0]))
                         return false;
 
                     else if (Object.ApplyLogicToChilds)
-                        if (SpawningFunctions.IsAnyChildVisible(Object.ObjectToSpawn, ReturnedPosition, FrustumCamera))
+                        if (SpawningFunctions.IsAnyChildVisible(Object.ObjectToSpawn, ReturnedPosition[0], FrustumCamera))
                             return false;
                 }
             }

@@ -64,7 +64,7 @@ namespace DDS
         public SpawnedObjectContainer SpawnedObjects = new SpawnedObjectContainer();
 
         [SerializeField]
-        public List<Component> SpawnPositions;
+        public List<SpawningComponent> SpawnPositions;
 
         [SerializeField]
         public GameObject Player;
@@ -92,14 +92,23 @@ namespace DDS
 
         private float SpawnInterval;
 
+        private SpawningComponent PositioningComponent = null;
+
         void Awake()
         {
             this.InitializeSpawnPositions();
             this.InitializeObjectToCheck();
+
+            SpawningFunctions.WaveSpawnAmount = WaveSpawnAmount;
+        }
+
+        void Start()
+        {
+
         }
 
         void Update()
-        {
+        {           
             SpawningFunctions.TriggerSpawnOverridesLogic = TriggerSpawnOverridesLogic;
             SpawningFunctions.IsTriggerSpawn = TriggerSpawn;           
             SpawningFunctions.UseOcclusionCulling = UseOcclusionCulling;          
@@ -111,12 +120,11 @@ namespace DDS
 
             SpawnInterval += Time.deltaTime;
 
-            Component PositioningComponent = null;
+            PositioningComponent = null;
 
             switch (SelectedSpawningStyle)
             {
                 case SpawningStyles.Wave:
-                    SelectedSpawningFunction = SpawningFunctions.SpawnWaveInArea;
                     PositioningComponent = GetComponentInChildren<SpawnArea>();
                     break;
 
@@ -124,13 +132,11 @@ namespace DDS
                     if (SelectedSpawnPositionOption == PositioningOptions.Area)
                     {
                         PositioningComponent = GetComponentInChildren<SpawnArea>();
-                        SelectedSpawningFunction = SpawningFunctions.SpawnPriorityObjectInArea;
                     }
 
                     else
                     {
                         PositioningComponent = SpawnPositions[SelectedSpawnPosition];
-                        SelectedSpawningFunction = SpawningFunctions.SpawnPriorityObjectAtSpawnPoint;                                            
                     }
                     break;
             }
@@ -143,8 +149,7 @@ namespace DDS
             if (IsSpawningAllowed())
             {
                 TriggerSpawn = false;
-
-                GameObject[] ReturnedObjects = SelectedSpawningFunction(PositioningComponent, camera);
+                GameObject[] ReturnedObjects = SpawningFunctions.Spawn(PositioningComponent, camera, SelectedSpawningStyle);
                 if (ReturnedObjects != null)
                 {
                     SpawnedObjects.AddObjects(ReturnedObjects);
@@ -163,7 +168,7 @@ namespace DDS
             {
                 int DesiredObjectAmount = 1;
 
-                if(SelectedSpawningFunction == SpawningFunctions.SpawnWaveInArea)            
+                if(SelectedSpawningStyle == SpawningStyles.Wave)
                     DesiredObjectAmount = SpawningFunctions.WaveSpawnAmount;
             
                 if(SelectedSpawningStyle == SpawningStyles.Wave && DoSpawnContinuousWaves)
@@ -248,7 +253,7 @@ namespace DDS
         /// </summary>
         public void InitializeSpawnPositions()
         {
-            SpawnPositions = new List<Component>();
+            SpawnPositions = new List<SpawningComponent>();
 
             foreach (var Child in transform.GetComponentsInChildren<SpawnPosition>())
             {
@@ -384,6 +389,7 @@ namespace DDS
 
         override public void OnInspectorGUI()
         {
+         
             this.serializedObject.Update();
 
             SpawningFunctions.TriggerSpawnOverridesLogic = TriggerSpawnOverridesLogic.boolValue;
@@ -514,7 +520,7 @@ namespace DDS
                 EditorGUI.indentLevel--;
             }
 
-            EditorGUILayout.PropertyField(SelectedSpawnPositionOption, new GUIContent("Spawn Style: "), StandardLayout);
+            EditorGUILayout.PropertyField(SelectedSpawnPositionOption, new GUIContent("Positioning Component: "), StandardLayout);
 
             if (SelectedSpawningStyle.intValue == (int)SpawningStyles.Wave)
                 SelectedSpawnPositionOption.intValue = (int)PositioningOptions.Area;
@@ -544,7 +550,7 @@ namespace DDS
                         break;
                     }
 
-                case PositioningOptions.Points:
+                case PositioningOptions.Point:
                     {
                         EditorGUI.indentLevel++;
                         EditorGUILayout.PropertyField(ActiveSpawnPoint);
