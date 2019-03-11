@@ -25,3 +25,4 @@ The Dynamic Spawning System tool is an easy to use Spawner asset for Unity.
 ## How-to Install
 
  - Just download and import the Package: 
+  https://github.com/Stumpstump/DSS/blob/master/Package/Dynamic%20Spawning%20System.unitypackage
