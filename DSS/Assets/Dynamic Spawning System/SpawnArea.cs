@@ -5,16 +5,16 @@ using UnityEditor;
 using System;
 
 namespace DDS
-{ 
-    public class SpawnArea : SpawningComponent
+{
+    public class spawnArea : SpawningComponent
     {
-       [SerializeField]
-        [Tooltip("Assign all Objects the ground detection should ignore to this mask")]
+        [SerializeField]
+        [Tooltip("Assign all Objects which the ground detection should ignore to this mask")]
         public LayerMask IgnoredSpawnObject;
 
         [SerializeField]
         [Tooltip("Adjust this height to not collide with the roof of the room, etc.")]
-        public float GroundDetectionHeight;
+        public float GroundDetectionHeight = 1;
 
         /// <summary>
         /// Set FrustumCamera to null if you don't want the Frustum Check.
@@ -78,28 +78,27 @@ namespace DDS
 
             Positions[0] = LastPosition;
 
-            for (int i = 1; i < ContainableAreaSize; i++)
+            for (int i = 1; i < ContainableAreaSize; ++i)
             {
-                if(CurrentColumn > (int)ContainableSizeWidth)
+                if (CurrentColumn > (int)ContainableSizeWidth)
                 {
                     CurrentColumn = 1;
-                    CurrentRow += 1; 
+                    CurrentRow += 1;
                 }
 
                 Vector3 CurrentPosition = new Vector3();
 
-
-                if(CurrentColumn == 1)
+                if (CurrentColumn == 1)
                 {
                     CurrentPosition.x = AreaTopRightPosition.x + ObjectWidth / 2;
                 }
 
                 else
                 {
-                    CurrentPosition.x = AreaTopRightPosition.x + ObjectWidth / 2 + (CurrentColumn - 1) * ObjectWidth;               
+                    CurrentPosition.x = AreaTopRightPosition.x + ObjectWidth / 2 + (CurrentColumn - 1) * ObjectWidth;
                 }
 
-                if(CurrentRow == 1)
+                if (CurrentRow == 1)
                 {
                     CurrentPosition.z = AreaTopRightPosition.z + ObjectLength / 2;
                 }
@@ -123,7 +122,7 @@ namespace DDS
             {
                 RaycastHit Hit;
 
-                if (!Physics.BoxCast(new Vector3(Positions[i].x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2  + GroundDetectionHeight, Positions[i].z), ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, GroundDetectionHeight + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2, ~IgnoredSpawnObject, QueryTriggerInteraction.Ignore))
+                if (!Physics.BoxCast(new Vector3(Positions[i].x, transform.position.y + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2 + GroundDetectionHeight, Positions[i].z), ObjectBounds.extents, Vector3.down, out Hit, Object.ObjectToSpawn.transform.rotation, GroundDetectionHeight + Object.ObjectToSpawn.GetComponent<Renderer>().bounds.size.y / 2, ~IgnoredSpawnObject, QueryTriggerInteraction.Ignore))
                 {
                     Debug.Log("<color=red> No ground detected, please readjust your Spawn Area height </color>");
                     return false;
@@ -134,12 +133,12 @@ namespace DDS
                 if (Hit.point.y + ObjectBounds.size.y / 2 > transform.position.y + ObjectBounds.size.y / 2)
                 {
                     Distance = Hit.point.y + ObjectBounds.size.y / 2 - transform.position.y + ObjectBounds.size.y / 2;
-                
+
                     if (Distance < 0)
                         Distance *= -1;
                 }
 
-                if(!UsePersonalLogic)
+                if (!UsePersonalLogic)
                 {
                     Collider[] OverlapingColliders = Physics.OverlapBox(new Vector3(Positions[i].x, Hit.point.y + ObjectBounds.size.y / 2, Positions[i].z), ObjectBounds.extents);
 
@@ -171,19 +170,19 @@ namespace DDS
                 }
 
             }
-            
-            if(!UsePersonalLogic)
+
+            if (!UsePersonalLogic)
             {
                 for (int i = 0; i < SpawnAblePositions.Count; i++)
                 {
                     if (FrustumCamera != null)
                     {
-                        if (SpawningFunctions.IsVisible(FrustumCamera, Object.ObjectToSpawn, SpawnAblePositions[i]))
+                        if (SpawningFunctions.isVisible(FrustumCamera, Object.ObjectToSpawn, SpawnAblePositions[i]))
                             IndexOfObjectsToRemove.Add(SpawnAblePositions[i]);
 
 
                         else if (Object.ApplyLogicToChilds)
-                            if (SpawningFunctions.IsAnyChildVisible(Object.ObjectToSpawn, SpawnAblePositions[i], FrustumCamera))
+                            if (SpawningFunctions.isAnyChildVisible(Object.ObjectToSpawn, SpawnAblePositions[i], FrustumCamera))
                                 IndexOfObjectsToRemove.Add(SpawnAblePositions[i]);
                     }
                 }
@@ -217,7 +216,7 @@ namespace DDS
 
                 foreach (Vector3 Position in BufferList)
                 {
-                    if(Position == SpawnAblePositions[SelectedPosition])
+                    if (Position == SpawnAblePositions[SelectedPosition])
                     {
                         AlreadyUsed = true;
                     }
@@ -250,20 +249,22 @@ namespace DDS
 
     }
 
-    [CustomEditor(typeof(SpawnArea))]
+#if UNITY_EDITOR
+
+    [CustomEditor(typeof(spawnArea))]
     public class AreaSpawningEditor : Editor
     {
         SerializedProperty GroundDetectionHeight;
         SerializedProperty ObjectsToSpawn;
         SerializedProperty ObjectsToIgnore;
 
-        SpawnArea SerializedObject;
+        spawnArea SerializedObject;
 
         GUILayoutOption[] ButtonLayout;
 
         void Awake()
         {
-            SerializedObject = target as SpawnArea;
+            SerializedObject = target as spawnArea;
 
             GroundDetectionHeight = this.serializedObject.FindProperty("GroundDetectionHeight");
             ObjectsToSpawn = this.serializedObject.FindProperty("Objects_to_Spawn");
@@ -314,6 +315,7 @@ namespace DDS
 
         }
     }
-
+#endif
 }
+
 

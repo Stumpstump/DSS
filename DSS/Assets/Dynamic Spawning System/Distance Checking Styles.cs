@@ -3,8 +3,8 @@
     /// </summary>
     [System.Serializable]
     public enum DistanceCheckingStyles
-    {
-        TwoDimensionalCheck, ThreeDimensionalCheck, SphereColliderCheck 
+{
+        TwoDimensional, ThreeDimensional, Sphere 
     }
 
 

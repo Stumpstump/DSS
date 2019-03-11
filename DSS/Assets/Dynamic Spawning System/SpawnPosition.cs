@@ -101,11 +101,11 @@ namespace DDS
 
                 if (FrustumCamera != null)
                 {
-                    if (SpawningFunctions.IsVisible(FrustumCamera, Object.ObjectToSpawn, ReturnedPosition[0]))
+                    if (SpawningFunctions.isVisible(FrustumCamera, Object.ObjectToSpawn, ReturnedPosition[0]))
                         return false;
 
                     else if (Object.ApplyLogicToChilds)
-                        if (SpawningFunctions.IsAnyChildVisible(Object.ObjectToSpawn, ReturnedPosition[0], FrustumCamera))
+                        if (SpawningFunctions.isAnyChildVisible(Object.ObjectToSpawn, ReturnedPosition[0], FrustumCamera))
                             return false;
                 }
             }
@@ -113,6 +113,8 @@ namespace DDS
             return true;
         }
     }
+
+#if UNITY_EDITOR
 
     [CustomEditor(typeof(SpawnPosition))]
     public class PositionSpawningEditor : Editor
@@ -176,5 +178,6 @@ namespace DDS
 
         }
     }
+#endif
 
 }

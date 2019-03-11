@@ -15,36 +15,32 @@ namespace DDS
         /// <summary>
         /// Change this variable to adjust the number of objects you want to spawn.
         /// </summary>
-        static public int WaveSpawnAmount;
+        static public int waveSpawnAmount;
 
         /// <summary>
         /// If true any logic without the adjustable spawn height will be ignored on trigger spawns. 
         /// </summary>
-        static public bool TriggerSpawnOverridesLogic;
+        static public bool triggerSpawnOverridesLogic;
 
         /// <summary>
-        /// If this is true the IsVisible will return false if the object is in frustum but behind a wall.
+        /// If this is true Occlusion Culling is used.
         /// </summary>
-        static public bool UseOcclusionCulling;
+        static public bool useOcclusionCulling;
 
         /// <summary>
-        /// On every trigger spawn this variable has to set to true to use the TriggerSpawnOverridesLogic variable.
+        /// This list holds all objects which are ignored by the Occlusion Culling.
         /// </summary>
-        static public bool IsTriggerSpawn;
-
-        /// <summary>
-        /// This list holds all objects which are ignored by the OcclusionCulling.
-        /// </summary>
-        static public List<GameObject> FrustumIgnoredObjects;
+        static public List<GameObject> FrustumignoredObjects;
 
         public static GameObject[] Spawn(SpawningComponent PositioningComponent, Camera FrustumCamera, SpawningStyles SpawnType)
-        {            
+        {
+            Debug.Log(PositioningComponent);
             if (PositioningComponent is SpawnPosition && SpawnType == SpawningStyles.Wave)
                 return null;
-
+            
             List<SpawnAbleObject> NotEmptyObjects = new List<SpawnAbleObject>();
 
-            for (int i = 0; i < PositioningComponent.Objects_to_Spawn.Length; i++)
+            for (int i = 0; i < PositioningComponent.Objects_to_Spawn.Length; ++i)
             {
                 if (PositioningComponent.Objects_to_Spawn[i].ObjectToSpawn != null)
                     NotEmptyObjects.Add(PositioningComponent.Objects_to_Spawn[i]);
@@ -68,7 +64,7 @@ namespace DDS
 
             Vector3[] Positions = new Vector3[0];
 
-            int SpawnAmount = WaveSpawnAmount;
+            int SpawnAmount = waveSpawnAmount;
 
             if (SpawnType == SpawningStyles.Continuous)
                 SpawnAmount = 1;
@@ -86,17 +82,18 @@ namespace DDS
             return ObjectsToReturn;
         }
 
-     
-
         /// <summary>
-        /// Checks if any child of the given object is in the frustum.
+        /// Calls is Child Visible on every Child.
         /// </summary>
+        /// <param name="FrustumCamera">Camera to check the Frustum off </param>
+        /// <param name="ObjectToCheck">Object which we check the childs off </param>
+        /// <param name="DesiredPosition">Position at which we check the Object </param>
         /// <returns></returns>
-        public static bool IsAnyChildVisible(GameObject Object, Vector3 DesiredPosition, Camera FrustumCamera)
+        public static bool isAnyChildVisible(GameObject Object, Vector3 DesiredPosition, Camera FrustumCamera)
         {
             for (int ChildIndex = 0; ChildIndex < Object.transform.childCount; ChildIndex++)
             {
-                if (IsVisibleChild(FrustumCamera, Object.transform.GetChild(ChildIndex).gameObject, Object, DesiredPosition))
+                if (isChildVisible(FrustumCamera, Object.transform.GetChild(ChildIndex).gameObject, Object, DesiredPosition))
                     return true;
             }
 
@@ -104,10 +101,14 @@ namespace DDS
         }
 
         /// <summary>
-        /// Checks if the object bounds is in the Camera Frustum.
+        /// Checks if the given Camera can see Object.
+        /// This is pretty expensive because we use a Ray to every corner of the Object.
         /// </summary>
+        /// <param name="FrustumCamera">Camera to check the Frustum off </param>
+        /// <param name="ObjectToCheck">The Object </param>
+        /// <param name="DesiredPosition">Position at which we check the Object </param>
         /// <returns></returns>
-        public static bool IsVisible(Camera FrustumCamera, GameObject ObjectToCheck, Vector3 DesiredPosition)
+        public static bool isVisible(Camera FrustumCamera, GameObject ObjectToCheck, Vector3 DesiredPosition)
         {
             GameObject BufferObject = ObjectToCheck;
             BufferObject.transform.position = DesiredPosition;
@@ -119,7 +120,7 @@ namespace DDS
             Plane[] CameraBounds = GeometryUtility.CalculateFrustumPlanes(FrustumCamera);
             if(GeometryUtility.TestPlanesAABB(CameraBounds, BoundsToCheck))
             {
-                if (!UseOcclusionCulling)
+                if (!useOcclusionCulling)
                     return false;
 
                 Vector3[] RayCastPositions = new Vector3[8];
@@ -141,18 +142,22 @@ namespace DDS
                     else
                     {
                         bool IsIgnoredObject = false;
-                        if (FrustumIgnoredObjects != null)
+                        if (FrustumignoredObjects != null)
                         {
-                            for (int IgnoredObjectIndex = 0; IgnoredObjectIndex < FrustumIgnoredObjects.Count; IgnoredObjectIndex++)
+                            for (int IgnoredObjectIndex = 0; IgnoredObjectIndex < FrustumignoredObjects.Count; IgnoredObjectIndex++)
                             {
-                                if (FrustumIgnoredObjects[IgnoredObjectIndex] != null)
+                                if (FrustumignoredObjects[IgnoredObjectIndex] != null)
                                 {
-                                    if (FrustumIgnoredObjects[IgnoredObjectIndex].transform != null)
-                                        if (FrustumIgnoredObjects[IgnoredObjectIndex].gameObject != null)
-                                            if (FrustumIgnoredObjects[IgnoredObjectIndex].gameObject == hit.transform.gameObject)
+                                    if (FrustumignoredObjects[IgnoredObjectIndex].transform != null)
+                                    {
+                                        if (FrustumignoredObjects[IgnoredObjectIndex].gameObject != null)
+                                        {
+                                            if (FrustumignoredObjects[IgnoredObjectIndex].gameObject == hit.transform.gameObject)
                                             {
                                                 IsIgnoredObject = true;
                                             }
+                                        }
+                                    }                                        
                                 }
                             }
                         }
@@ -168,10 +173,15 @@ namespace DDS
         }
 
         /// <summary>
-        /// Checks if the child is in the cameras frustum.
+        /// Checks if the given Camera can see Object.
+        /// This is pretty expensive because we use a Ray to every corner of the Object.
         /// </summary>
+        /// <param name="FrustumCamera">Camera to check the Frustum off </param>
+        /// <param name="ObjectToCheck">The Object </param>
+        /// <param name="Parent">Parent of the Object which we want to check</param>
+        /// <param name="DesiredPosition">Position at which we check the Object </param>
         /// <returns></returns>
-        public static bool IsVisibleChild(Camera FrustumCamera, GameObject ObjectToCheck, GameObject Parent, Vector3 DesiredPosition)
+        public static bool isChildVisible(Camera FrustumCamera, GameObject ObjectToCheck, GameObject Parent, Vector3 DesiredPosition)
         {
             GameObject BufferObject = ObjectToCheck;
             BufferObject.transform.position = DesiredPosition + ObjectToCheck.transform.localPosition;
@@ -183,7 +193,7 @@ namespace DDS
             Plane[] CameraBounds = GeometryUtility.CalculateFrustumPlanes(FrustumCamera);
             if (GeometryUtility.TestPlanesAABB(CameraBounds, BoundsToCheck))
             {
-                if (!UseOcclusionCulling)
+                if (!useOcclusionCulling)
                     return true;
 
                 Vector3[] RayCastPositions = new Vector3[8];
@@ -205,15 +215,15 @@ namespace DDS
                     else
                     {
                         bool IsIgnoredObject = false;
-                        if (FrustumIgnoredObjects != null)
+                        if (FrustumignoredObjects != null)
                         {
-                            for (int IgnoredObjectIndex = 0; IgnoredObjectIndex < FrustumIgnoredObjects.Count; IgnoredObjectIndex++)
+                            for (int IgnoredObjectIndex = 0; IgnoredObjectIndex < FrustumignoredObjects.Count; IgnoredObjectIndex++)
                             {
-                                if (FrustumIgnoredObjects[IgnoredObjectIndex] != null)
+                                if (FrustumignoredObjects[IgnoredObjectIndex] != null)
                                 {
-                                    if (FrustumIgnoredObjects[IgnoredObjectIndex].transform != null)
-                                        if (FrustumIgnoredObjects[IgnoredObjectIndex].gameObject != null)
-                                            if (FrustumIgnoredObjects[IgnoredObjectIndex].gameObject == hit.transform.gameObject)
+                                    if (FrustumignoredObjects[IgnoredObjectIndex].transform != null)
+                                        if (FrustumignoredObjects[IgnoredObjectIndex].gameObject != null)
+                                            if (FrustumignoredObjects[IgnoredObjectIndex].gameObject == hit.transform.gameObject)
                                             {
                                                 IsIgnoredObject = true;
                                             }
@@ -235,7 +245,7 @@ namespace DDS
         /// </summary>
         /// <param name="Objects"></param>
         /// <returns></returns>
-        public static GameObject[] GetAllIgnoredObjects(List<IgnoredObject> Objects)
+        public static GameObject[] GetAllignoredObjects(List<IgnoredObject> Objects)
         {
             List<GameObject> ObjectsToReturn = new List<GameObject>();
 
@@ -278,6 +288,7 @@ namespace DDS
 
         /// <summary>
         /// Calculates the spawn weight and returns a random object based on that number.
+        /// == Weight / Sum of every Objects Weight
         /// </summary>
         /// <param name="Objects"></param>
         /// <param name="ObjectIndex"></param>

@@ -23,6 +23,7 @@ namespace DDS
     [System.Serializable]
     public struct Identification
     {
+        public string tag;
         public int Tag;
         public string Name;
         public GameObject Object;

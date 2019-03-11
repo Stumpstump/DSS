@@ -11,7 +11,7 @@ using UnityEngine;
         /// <param name="SpawnerPosition"> The position of the Spawner </param>
         /// <param name="ObjectToCheckPosition"> The position of the Object to check the Position of </param>
         /// <param name="MaxDistance"> The Maximum distance which will return into true </param>
-        static public bool TwoDimensionalCheck(Transform SpawnerPosition, Transform ObjectToCheckPosition, float MaxDistance)
+        static public bool TwoDimensional(Transform SpawnerPosition, Transform ObjectToCheckPosition, float MaxDistance)
         {
 
             float DistanceX, DistanceZ;
@@ -35,7 +35,7 @@ using UnityEngine;
             return Mathf.Sqrt(DistanceX + DistanceZ) >= MaxDistance;
         }
 
-    static public bool TwoDimensionalCheck(Vector3 Position1, Vector3 Position2, float MaxDistance)
+    static public bool TwoDimensional(Vector3 Position1, Vector3 Position2, float MaxDistance)
     {
 
         float DistanceX, DistanceZ;
@@ -65,7 +65,7 @@ using UnityEngine;
     /// <param name="SpawnerPosition"> The position of the Spawner </param>
     /// <param name="ObjectToCheckPosition"> The position of the Object to check the Position of </param>
     /// <param name="MaxDistance"> The Maximum distance which will return into true </param>
-    static public bool ThreeDimensionalCheck(Transform SpawnerPosition, Transform ObjectToCheckPosition, float MaxDistance)
+    static public bool ThreeDimensional(Transform SpawnerPosition, Transform ObjectToCheckPosition, float MaxDistance)
     {
 
         float DistanceX, DistanceY, DistanceZ;
