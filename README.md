@@ -22,3 +22,6 @@ The Dynamic Spawning System tool is an easy to use Spawner asset for Unity.
 
 - Option to check if the Player is not in range to be able to spawn (based on 2D/3D/Sphere distance checking)
 
+## How-to Install
+
+ - Just download and import the Package: 
